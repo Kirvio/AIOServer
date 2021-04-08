@@ -2,143 +2,36 @@ from tkinter import Tk, messagebox, font, IntVar, Toplevel, Checkbutton, ttk, Bu
 from tkinter.filedialog import askopenfile
 from tkcalendar import DateEntry
 from xlsxwriter.workbook import Workbook
-from socket import AF_INET, socket, SOCK_STREAM, error
 import os
 import time
 import re
 from datetime import datetime
-from Encrypt import decrypt_message, encrypt_message
-from MainFunctions import InsertInEntryes, center
+from Encrypt import InitConnection
 
-# Класс для соединения с сервером
-class ToServer(object):
-         
-    # Функция подключения к серверу
-    def InitConnection(self, host, port, data=str()):
-        __HEADER = 64
-        try:
-            __sock = socket(AF_INET, SOCK_STREAM)
-        except error as __err:
-            messagebox.showinfo('Ошибка', __err)
-        else:
-            try: 
-                __sock.connect((host, port))
-                __query = encrypt_message(data)                               # Зашифровываем данные перед отправкой
-                __query_length = len(__query)                                 # Вычисляем длину ссообщения
-                __send_length = str(__query_length).encode('utf8')            # Кодируем длину в нужный формат
-                __send_length += b' ' * (__HEADER - len(__send_length))       # Кодируем полученную длину в байты и отправляем
-                __sock.sendall(__send_length)                                 # Сначала длину
-                __sock.sendall(__query)                                       # Затем само зашифрованное сообщение
-                __msg_length = __sock.recv(__HEADER).decode('utf8')
-                if __msg_length:
-                    __msg = __sock.recv(int(__msg_length))
-                    __ready = decrypt_message(__msg)                          # Расшифровываем данные с сервера
-                    return __ready
-                else:
-                    messagebox.showinfo("Ошибка", "Какая-то ошибка")
-            except (UnicodeDecodeError, error, ValueError, OSError) as __err:
-                messagebox.showinfo("Ошибка", __err)
-                return False
-        finally:
-            time.sleep(0.5)
-            __sock.close()
-
-    # Сортируем данные с сервера
-    def Sort(self, ReceivedData=tuple()):
-        try:
-            __dataMessage = ReceivedData.split('#')
-            __ReceivedMsg = (tuple(__s.split('^')) for __s in __dataMessage)
-            __ReceivedMsg = (__x for __x in __ReceivedMsg if __x != ('',))
-            return __ReceivedMsg
-        except AttributeError as err:
-            messagebox.showinfo("Ошибка", err)
-
-    # Функция запрашивает данные
-    def Query_all(self):
-        __Received = self.InitConnection(host = "localhost", port = 43333, data = "ALLQUERY")
-        __Sorted = self.Sort(ReceivedData = __Received)
-        Root.table.UpdateTable(rs = __Sorted)
-        Root.isfull_label.configure(text = "Все заявки")
-        messagebox.showinfo("Внимание", "Таблица успешно обновлена!")
-
-    # Функция отправляет полученные данные на сервер с ключевым словом и разделителями 
-    def Insert_into(self):
-        __now = datetime.now()
-        __d_string = __now.strftime("%d-%m-%Y")
-        __variables = (Root.FIO.get(), Root.address.get(), Root.telephone.get(), Root.reason.get(), Root.information.get(), \
-        Root.for_master.get(), Root.master.get(), Root.r_var.get(), Root.Category.get(), Authorization.FIO_employee, __d_string, Root.Date.get())
-        __pattern = r'[A-Za-z]'
-        __kek = [__z for __z in __variables if __z == '' or len(__z) > 100 or re.findall(__pattern, __z)]
-
-        # If length of the query more then 50 or contents engl letters or empty, call nessagebox
-        if __kek:
-            messagebox.showinfo("Ошибка", "Ошибка в тексте!")
-        else:
-            __request = "^".join(("INSERT", *__variables))
-                  
-            __ReceivedData = self.InitConnection(host = "localhost", port = 43333, data = __request)
-            Root.isfull_label.configure(text = "")
-            messagebox.showinfo("Data:", __ReceivedData)
-
-            __tuple_for_table = ((__variables[11], __variables[0], __variables[1], __variables[2], __variables[3], __variables[4], \
-            __variables[5], __variables[6], __variables[7], __variables[8]))
-            Root.table.AddQuery(entry = (__tuple_for_table))        
+def InsertInEntryes(entryes = tuple(), dell = int()):
+    if dell == 1:
+        [__i.delete(0, END) for __i in entryes]
+    else:
+        [[__i.delete(0, END), __i.insert(0, __d)] for __i, __d in entryes]
       
-    # Функция ищет данные в таблице
-    def Search(self, ID = int()):
-        __pattern = r'[A-Za-z]'
-        if ID == 1:
-            __CAT = Root.Category.get()
-            if __CAT == '' or re.findall(__pattern, __CAT):
-                messagebox.showinfo("Ошибка", "Введите категорию корректно!")
-            else:
-                Root.table.SearchQuery(trigger = __CAT)
-        elif ID == 2:
-            __DATE = Root.Date.get()
-            if __DATE == '' or re.findall(__pattern, __DATE):
-                messagebox.showinfo("Ошибка", "Выберите дату корректно!")
-            else:
-                Root.table.SearchQuery(trigger = __DATE)
-        elif ID == 3:
-            __FIO = Root.FIO.get()
-            if __FIO == '' or re.findall(__pattern, __FIO):
-                messagebox.showinfo("Ошибка", "Заполните поле ФИО корректно!")
-            else:
-                Root.table.SearchQuery(trigger = __FIO)
-                    
-    # Функция отправляет на сервер запрос на удаление заявки
-    def Delete_by_address(self):      
-        __pattern = r'[A-Za-z]'
-        __DADR = Root.address.get()
-        if __DADR == '' or re.findall(__pattern, __DADR):
-            messagebox.showinfo("Ошибка", "Заполните адресс корректно")
-        elif Root.r_var.get() == "Открыта":
-            messagebox.showinfo("Ошибка", "Заявка в открытом состоянии \
-            \nЗакройте заявку перед тем как удалить")
-        else:
-            __request = "^".join(("DELETE", __DADR))
-            __ReceivedData = self.InitConnection(host = "localhost", port = 43333, data = __request)
-            messagebox.showinfo("Data:", __ReceivedData)
-            # Для Таблицы
-            Root.table.DeleteQuery(adr = __DADR)
-      
-    # Функция отправляет запрос на сервер с ключевым словом обновить
-    def Update_data(self):
-        __variables = (Root.FIO.get(), Root.address.get(), Root.telephone.get(), Root.reason.get(), Root.information.get(), Root.for_master.get(),\
-        Root.master.get(), Root.r_var.get(), Root.Category.get(), Root.Date.get())
+def center(win):
 
-        __pattern = r'[A-Za-z]'
-        __kek = [__z for __z in __variables if __z == '' or len(__z) > 100 or re.findall(__pattern, __z)]
-        if __kek:
-            messagebox.showinfo("Ошибка", "Ошибка в тексте!")
-        else:
-            __request = "^".join(("UPDATE", *__variables))
-            __ReceivedData = self.InitConnection(host = "localhost", port = 43333, data = __request)
-            messagebox.showinfo("Data:", __ReceivedData)
-                
-            __gr_var = ((__variables[9], __variables[0], __variables[1], __variables[2], __variables[3], __variables[4], \
-            __variables[5], __variables[6], __variables[7], __variables[8]))
-            Root.table.RenewQuery(trigger = __variables[0], entry = __gr_var)
+    win.update_idletasks()
+    __width = win.winfo_width()
+
+    __frm_width = win.winfo_rootx() - win.winfo_x()
+    __win_width = __width + 2 * __frm_width
+
+    __height = win.winfo_height()
+    __titlebar_height = win.winfo_rooty() - win.winfo_y()
+
+    __win_height = __height + __titlebar_height + __frm_width
+
+    __x = win.winfo_screenwidth() // 2 - __win_width // 2
+    __y = win.winfo_screenheight() // 2 - __win_height // 2
+
+    win.geometry('{}x{}+{}+{}'.format(__width, __height, __x, __y))
+    win.deiconify()  
 
 """GUI Part"""
 # Класс для работы с таблицей
@@ -199,7 +92,7 @@ class Table(Frame):
 
     # Экспорт данных с таблицы в excel      
     def Export(self, heading = tuple()):
-        file = askopenfile(mode ='w+', filetypes =[('Excel', '*.xlsx')])
+        file = askopenfile(mode = 'w+', filetypes = [('Excel', '*.xlsx')])
         if file:
             try:
                 workbook = Workbook(file.name)
@@ -298,7 +191,7 @@ class Registration(Toplevel):
 
     def __NewUser(self):
         __ToAuth = "^".join(("REGISTER", Registration.ID.get(), Registration.Login.get(), Registration.Password.get(), Registration.FIO_empl.get()))
-        __msg = ToServer().InitConnection(host = "localhost", port = 43333, data = __ToAuth)
+        __msg = InitConnection(data = __ToAuth)
         print(__msg)
         if __msg == "Reg":
             messagebox.showinfo("Успех:", "Регистрация прошла успешно!")
@@ -380,7 +273,7 @@ class Authorization(Tk):
             messagebox.showinfo("Ошибка", "Поля заполнены некорректно")
         else:
             __ToAuth = "^".join(("ENTER", *__TupleAuth))   
-            __msg = ToServer().InitConnection(host = "localhost", port = 43333, data = __ToAuth)
+            __msg = InitConnection(data = __ToAuth)
             if __msg:
                 __msg = __msg.split("^")
                 print(__msg[0])
@@ -402,13 +295,12 @@ class Authorization(Tk):
 # Главное окно
 class Root(Tk):
       
-    # Для обращении к конструкции родительского класса
+    # Конструктор класса
     def __init__(self, data = tuple()):
         super().__init__()
         
         # self.bind("<Configure>", self.__configure_handler)
         self.protocol("WM_DELETE_WINDOW", self.__confirm_delete)
-        self.__TS = ToServer()
 
         # Переменные
         Root.Date, Root.FIO, Root.address, Root.telephone, Root.reason, Root.information, Root.for_master, Root.master, Root.r_var, Root.Category = \
@@ -467,13 +359,13 @@ class Root(Tk):
         self.__r1 = Radiobutton(self, activeforeground = 'White', activebackground = 'gray10', bg = "gray10", font = ("Times New Roman", 12), fg = 'White', text = 'Открыта', selectcolor = 'gray10', variable = self.r_var, value = 'Открыта')
         self.__r2 = Radiobutton(self, activeforeground = 'White', activebackground = 'gray10', bg = "gray10", font = ("Times New Roman", 12), fg = 'White', text = 'Закрыта', selectcolor = 'gray10', variable = self.r_var, value = 'Закрыта')
 
-        self.__delete_button = Button(self, font = ("Times New Roman", 12), fg = "gray1", text = "Удалить Запись", width = 15, command = self.__TS.Delete_by_address)
+        self.__delete_button = Button(self, font = ("Times New Roman", 12), fg = "gray1", text = "Удалить Запись", width = 15, command = self.Delete_by_address)
 
-        self.__add_button = Button(self, font = ("Times New Roman", 12), fg = "gray1", text = "Добавить Запись", width = 15, command = self.__TS.Insert_into)
+        self.__add_button = Button(self, font = ("Times New Roman", 12), fg = "gray1", text = "Добавить Запись", width = 15, command = self.Insert_into)
 
-        self.__srch_button = Button(self, font = ("Times New Roman", 12), fg = "gray1", text = "Поиск по дате", width = 15, command = lambda: self.__TS.Search(ID = 2))
+        self.__srch_button = Button(self, font = ("Times New Roman", 12), fg = "gray1", text = "Поиск по дате", width = 15, command = lambda: self.Search(ID = 2))
 
-        self.__update_button = Button(self, font = ("Times New Roman", 12), fg = "gray1", text = "Обновить Запись", width = 15, command = self.__TS.Update_data)
+        self.__update_button = Button(self, font = ("Times New Roman", 12), fg = "gray1", text = "Обновить Запись", width = 15, command = self.Update_data)
 
         self.__clear_button = Button(self, font = ("Times New Roman", 12), fg = "gray1", text = "Очистить Поля Ввода", width = 15, command = lambda: InsertInEntryes(entryes = (self.FIO_entry, \
         self.address_entry, self.telephone_entry, self.reason_entry, self.information_entry, self.for_master_entry, self.master_entry), dell = 1))
@@ -482,24 +374,24 @@ class Root(Tk):
         __m = Menu(self)
         __m_edit = Menu(__m, font = ("Times New Roman", 11), tearoff = 0)
         __m.add_cascade(menu = __m_edit, label = "Меню")
-        __m_edit.add_command(label = "Скрыть меню", command = lambda: self.__HideMenu(widg = [self.__category_label, \
-        self.__FIO_label, self.__address_label, self.__telephone_label, self.__reason_label, self.__information_label, self.__for_master_label, self.__master_label,\
-        self.__record_value_label, self.__data_label, self.FIO_entry, self.address_entry, self.telephone_entry, self.reason_entry, self.information_entry, self.for_master_entry, \
-        self.master_entry, self.__r1, self.__r2, self.__cal, self.__monthchoosen, self.__delete_button, self.__add_button, self.__srch_button, self.__update_button, self.__clear_button]))
+        __m_edit.add_command(label = "Скрыть меню", command = lambda: self.__HideMenu(widg = (self.__category_label, 
+        self.__FIO_label, self.__address_label, self.__telephone_label, self.__reason_label, self.__information_label, self.__for_master_label, self.__master_label,
+        self.__record_value_label, self.__data_label, self.FIO_entry, self.address_entry, self.telephone_entry, self.reason_entry, self.information_entry, self.for_master_entry, 
+        self.master_entry, self.__r1, self.__r2, self.__cal, self.__monthchoosen, self.__delete_button, self.__add_button, self.__srch_button, self.__update_button, self.__clear_button)))
         __m_edit.add_command(label = "Показать меню", command = self.__ShowMenu)
         __m_edit.add_separator()
         __m_edit.add_command(label = "Экспорт в Excel", command = lambda : Root.table.Export(heading = ('Дата выполнения заявки', 'ФИО', 'Адрес', 'Телефон', 'Причина', 'Время выполнения', 'Для Мастера', 'Мастер', 'Состояние заявки', 'Категория', 'ФИО сотрудника', 'Дата регистрации')))
 
         __m_search = Menu(__m, font = ("Times New Roman", 11), tearoff=0) 
         __m.add_cascade(menu=__m_search, label="Поиск")
-        __m_search.add_command(label = "По категории", command = lambda: self.__TS.Search(ID = 1))
-        __m_search.add_command(label = "По дате", command = lambda: self.__TS.Search(ID = 2))
-        __m_search.add_command(label = "По ФИО", command = lambda: self.__TS.Search(ID = 3))
+        __m_search.add_command(label = "По категории", command = lambda: self.Search(ID = 1))
+        __m_search.add_command(label = "По дате", command = lambda: self.Search(ID = 2))
+        __m_search.add_command(label = "По ФИО", command = lambda: self.Search(ID = 3))
 
         __m_table = Menu(__m, font = ("Times New Roman", 11), tearoff=0)
         __m.add_cascade(menu = __m_table, label = "Таблица")
-        __m_table.add_command(label = "Все заявки/Обновить", command = self.__TS.Query_all)
-        __m_table.add_command(label = "Добавить запись", command = self.__TS.Insert_into)
+        __m_table.add_command(label = "Все заявки/Обновить", command = self.Query_all)
+        __m_table.add_command(label = "Добавить запись", command = self.Insert_into)
         __m.add_command(label = "О программе")
         __m.add_command(label = "Выйти", command = self.destroy)
         if Authorization.FIO_employee == 'Андрющенко Егор Валерьевич':                  
@@ -513,11 +405,107 @@ class Root(Tk):
     #def __configure_handler(self, event):
     #    self.update_idletasks()
     #    time.sleep(0.1)
+    # Сортируем данные с сервера
+    def Sort(self, ReceivedData = tuple()):
+        try:
+            __dataMessage = ReceivedData.split('#')
+            __ReceivedMsg = (tuple(__s.split('^')) for __s in __dataMessage)
+            __ReceivedMsg = (__x for __x in __ReceivedMsg if __x != ('',))
+            return __ReceivedMsg
+        except AttributeError as err:
+            messagebox.showinfo("Ошибка", err)
+
+    # Функция запрашивает данные
+    def Query_all(self):
+        __Received = InitConnection(data = "ALLQUERY")
+        __Sorted = self.Sort(ReceivedData = __Received)
+        Root.table.UpdateTable(rs = __Sorted)
+        Root.isfull_label.configure(text = "Все заявки")
+        messagebox.showinfo("Внимание", "Таблица успешно обновлена!")
+        # Функция отправляет полученные данные на сервер с ключевым словом и разделителями 
+
+    def Insert_into(self):
+        __now = datetime.now()
+        __d_string = __now.strftime("%d-%m-%Y")
+        __variables = (Root.FIO.get(), Root.address.get(), Root.telephone.get(), Root.reason.get(), Root.information.get(), \
+        Root.for_master.get(), Root.master.get(), Root.r_var.get(), Root.Category.get(), Authorization.FIO_employee, __d_string, Root.Date.get())
+        __pattern = r'[A-Za-z]'
+        __kek = [__z for __z in __variables if __z == '' or len(__z) > 100 or re.findall(__pattern, __z)]
+
+        # If length of the query more then 50 or contents engl letters or empty, call nessagebox
+        if __kek:
+            messagebox.showinfo("Ошибка", "Ошибка в тексте!")
+        else:
+            __request = "^".join(("INSERT", *__variables))
+                    
+            __ReceivedData = InitConnection(data = __request)
+            Root.isfull_label.configure(text = "")
+            messagebox.showinfo("Data:", __ReceivedData)
+
+            __tuple_for_table = ((__variables[11], __variables[0], __variables[1], __variables[2], __variables[3], __variables[4], \
+            __variables[5], __variables[6], __variables[7], __variables[8]))
+            Root.table.AddQuery(entry = (__tuple_for_table))        
+        
+    # Функция ищет данные в таблице
+    def Search(self, ID = int()):
+        __pattern = r'[A-Za-z]'
+        if ID == 1:
+            __CAT = Root.Category.get()
+            if __CAT == '' or re.findall(__pattern, __CAT):
+                messagebox.showinfo("Ошибка", "Введите категорию корректно!")
+            else:
+                Root.table.SearchQuery(trigger = __CAT)
+        elif ID == 2:
+            __DATE = Root.Date.get()
+            if __DATE == '' or re.findall(__pattern, __DATE):
+                messagebox.showinfo("Ошибка", "Выберите дату корректно!")
+            else:
+                Root.table.SearchQuery(trigger = __DATE)
+        elif ID == 3:
+            __FIO = Root.FIO.get()
+            if __FIO == '' or re.findall(__pattern, __FIO):
+                messagebox.showinfo("Ошибка", "Заполните поле ФИО корректно!")
+            else:
+                Root.table.SearchQuery(trigger = __FIO)
+                    
+    # Функция отправляет на сервер запрос на удаление заявки
+    def Delete_by_address(self):      
+        __pattern = r'[A-Za-z]'
+        __DADR = Root.address.get()
+        if __DADR == '' or re.findall(__pattern, __DADR):
+            messagebox.showinfo("Ошибка", "Заполните адресс корректно")
+        elif Root.r_var.get() == "Открыта":
+            messagebox.showinfo("Ошибка", "Заявка в открытом состоянии \
+            \nЗакройте заявку перед тем как удалить")
+        else:
+            __request = "^".join(("DELETE", __DADR))
+            __ReceivedData = InitConnection(data = __request)
+            messagebox.showinfo("Data:", __ReceivedData)
+            # Для Таблицы
+            Root.table.DeleteQuery(adr = __DADR)
+        
+    # Функция отправляет запрос на сервер с ключевым словом обновить
+    def Update_data(self):
+        __variables = (Root.FIO.get(), Root.address.get(), Root.telephone.get(), Root.reason.get(), Root.information.get(), Root.for_master.get(),\
+        Root.master.get(), Root.r_var.get(), Root.Category.get(), Root.Date.get())
+
+        __pattern = r'[A-Za-z]'
+        __kek = [__z for __z in __variables if __z == '' or len(__z) > 100 or re.findall(__pattern, __z)]
+        if __kek:
+            messagebox.showinfo("Ошибка", "Ошибка в тексте!")
+        else:
+            __request = "^".join(("UPDATE", *__variables))
+            __ReceivedData = InitConnection(data = __request)
+            messagebox.showinfo("Data:", __ReceivedData)
+
+            __gr_var = ((__variables[9], __variables[0], __variables[1], __variables[2], __variables[3], __variables[4], \
+            __variables[5], __variables[6], __variables[7], __variables[8]))
+            Root.table.RenewQuery(trigger = __variables[0], entry = __gr_var)
 
     # Функция вызова окна регистрации
     def __RegWindow(self):
-        __RCVD = ToServer().InitConnection(host = "localhost", port = 43333, data = "USERQUERY")
-        __srt = ToServer().Sort(ReceivedData = __RCVD)
+        __RCVD = InitConnection(data = "USERQUERY")
+        __srt = self.Sort(ReceivedData = __RCVD)
         time.sleep(0.2)
         Registration(self, __srt)  
 
@@ -533,7 +521,7 @@ class Root(Tk):
 
     def __HideMenu(self, widg = tuple()):
         self.update_idletasks()
-        (__i.place_forget() for __i in widg)
+        [__i.place_forget() for __i in widg]
         Root.table.place(relwidth = 0.98, relheight = 0.90, relx = 0.01, rely = 0.05)
         self.__curdate.place(relwidth = 0.13, relheight = 0.03, relx = 0.01, rely = 0.01)
         Root.isfull_label.place(relwidth = 0.15, relheight = 0.03, relx = 0.43, rely = 0.01)
@@ -585,20 +573,19 @@ def Main():
     __d_strg = __now.strftime("%d.%m.%Y")
 
     # Первое соединение с сервером, запрос заявок на сегодня 
-    __Received = ToServer().InitConnection(host = "localhost", port = 43333, data = '^'.join(("CURQUERY",__d_strg)))
+    __Received = InitConnection(data = '^'.join(("CURQUERY",__d_strg)))
     if __Received == 'None':
         time.sleep(0.2)
         Main.mainroot = Root()
         Root.isfull_label.configure(text = "На сегодня заявок нет")
     else:
-        __Sorted = ToServer().Sort(ReceivedData = __Received)
+        __Sorted = Sort(ReceivedData = __Received)
         time.sleep(0.2)
         Main.mainroot = Root(__Sorted)
         Root.isfull_label.configure(text = "Заявки на сегодня:")  
 
 # Запуск программы
 if __name__ == '__main__':
-    time.sleep(0.5)
     App = Authorization()
     center(App)
     App.mainloop()

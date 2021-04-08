@@ -226,17 +226,19 @@ class MyServer(object):
     async def __read_request(self, reader):
         while True:
             try:
-                __msg_length = (await reader.read(self.__HEADER)).decode('utf8') 
+                __msg_length = (await reader.read(self.__HEADER)).decode('utf8')
                 if not __msg_length:
-                    break     
-                __msg_length = int(__msg_length)
-                __request = (await reader.read(__msg_length))
+                    break
+                else:
+                    __msg_length = int(__msg_length)
+                    __request = (await reader.read(__msg_length))
                 if not __request:
-                    break     
-                __response = (await decrypt_message(__request))
-                __response = __response.split("^")
-            except (UnicodeDecodeError, Exception, ValueError, OSError) as __err:           
-                print(__err)           
+                    break
+                else:
+                    __response = (await decrypt_message(__request))
+                    __response = __response.split("^")
+            except (UnicodeDecodeError, Exception, ValueError, OSError) as __err:
+                print(__err)
             finally:
                 return __response
 
@@ -247,7 +249,7 @@ class MyServer(object):
         __send_length = str(__query_length).encode('utf8')
         __send_length += b' ' * (self.__HEADER - len(__send_length))
         try:
-            
+
             # Посылает длину и сам запрос
             writer.write(__send_length)
             writer.write(__query)
