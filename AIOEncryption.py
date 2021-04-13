@@ -5,7 +5,8 @@ import asyncio
 __save_path = 'C:/ПО Заявки/Сервер Python/secret.key'
 
 # Asyncio decorator that returns Future while running task in background thread (good for cpu bound functions that release the GIL such as `bcrypt.checkpw`) 
-def asyncify(func):        
+def asyncify(func):
+
     #  * - распаковывает обьекты, внутри которых находятся некоторые элементы(в данном случае аргументы функции)
     async def inner(*args, **kwargs):
         __loop = asyncio.get_running_loop()
@@ -14,13 +15,13 @@ def asyncify(func):
     return inner
 
 # Расшифровка данных при получении
-@asyncify 
-def decrypt_message(message):
+@asyncify
+def decrypt_message(message, path = __save_path):
     try:
-        with open(__save_path, "rb") as __wr:
+        with open(path, "rb") as __wr:
             __key = __wr.read()
             __f = FN(__key)
-        __decrypted_message = __f.decrypt(message)                
+        __decrypted_message = __f.decrypt(message)
         __decoded_message = __decrypted_message.decode('utf8')
         return __decoded_message
     except (OSError, Exception) as err:
@@ -28,9 +29,9 @@ def decrypt_message(message):
 
 # Шифрование данных перед отправкой
 @asyncify
-def encrypt_message(message):  
+def encrypt_message(message, path = __save_path):  
     try:
-        with open(__save_path, "rb") as __wr:
+        with open(path, "rb") as __wr:
             __key = __wr.read()
             __f = FN(__key)
         __encoded_message = str(message).encode('utf8')

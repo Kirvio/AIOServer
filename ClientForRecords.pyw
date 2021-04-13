@@ -6,13 +6,22 @@ import os
 import time
 import re
 from datetime import datetime
-from Encrypt import InitConnection
+from Encrypt import Internet
 
 def InsertInEntryes(entryes = tuple(), dell = int()):
     if dell == 1:
         [__i.delete(0, END) for __i in entryes]
     else:
         [[__i.delete(0, END), __i.insert(0, __d)] for __i, __d in entryes]
+
+def Sort(ReceivedData = tuple()):
+    try:
+        __dataMessage = ReceivedData.split('#')
+        __ReceivedMsg = (tuple(__s.split('^')) for __s in __dataMessage)
+        __ReceivedMsg = (__x for __x in __ReceivedMsg if __x != ('',))
+        return __ReceivedMsg
+    except AttributeError as err:
+        messagebox.showinfo("Ошибка", err)
       
 def center(win):
 
@@ -76,7 +85,7 @@ class Table(Frame):
 
     # Функция двойного щелчка
     def __OnEvents(self, rt):
-        __RT = Main.mainroot
+        __RT = MainFN.mainroot
         __item = self.__tree.focus() 
         if __item:
             __data = self.__tree.item(__item)['values']
@@ -151,7 +160,7 @@ class Registration(Toplevel):
         Registration.ID, Registration.Login, Registration.Password, Registration.FIO_empl = StringVar(), StringVar(), StringVar(), StringVar()
         self.title("Регистрация:")
         self.geometry("800x300")
-                
+
         # Описание для полей ввода
         self.__ID_LABEL = Label(self, bg = "gray10", fg = "white", font = ("Times New Roman", 12), text = "ID:")
         self.__LOGIN_REG_LABEL = Label(self, bg = "gray10", fg = "white", font = ("Times New Roman", 12), text = "Логин:")
@@ -191,7 +200,7 @@ class Registration(Toplevel):
 
     def __NewUser(self):
         __ToAuth = "^".join(("REGISTER", Registration.ID.get(), Registration.Login.get(), Registration.Password.get(), Registration.FIO_empl.get()))
-        __msg = InitConnection(data = __ToAuth)
+        __msg = Internet().IntoNetwork(data = __ToAuth)
         print(__msg)
         if __msg == "Reg":
             messagebox.showinfo("Успех:", "Регистрация прошла успешно!")
@@ -208,6 +217,8 @@ class Authorization(Tk):
 
     def __init__(self):
         super().__init__()
+
+        self.protocol("WM_DELETE_WINDOW", self.__close)
 
         # Нужные переменные    
         Authorization.__Login, Authorization.__Password, Authorization.FIO_employee = StringVar(), StringVar(), StringVar()
@@ -248,22 +259,16 @@ class Authorization(Tk):
         # Запрет на иземение размера окна
         self.resizable(width = False, height = False)
         self['bg'] = "gray10"
-    
+
+    def __close(self):
+        self.destroy()
+        os._exit(0)
+
     def __ShowPas(self):
         if Authorization.__ent.get():
             self.__password_entry.config(show = "")
         else:
             self.__password_entry.config(show = "*")
-
-    #def __RememberPas(self):
-
-    #           if Authorization.__ent.get():
-
-    #                self.__password_entry.config(show = "*")
-
-        #         else:
-
-        #              self.__password_entry.config(show = "")
 
     # Функция авторизации 
     def __MainWindow(self):
@@ -273,16 +278,15 @@ class Authorization(Tk):
             messagebox.showinfo("Ошибка", "Поля заполнены некорректно")
         else:
             __ToAuth = "^".join(("ENTER", *__TupleAuth))   
-            __msg = InitConnection(data = __ToAuth)
+            __msg = Internet().IntoNetwork(data = __ToAuth)
             if __msg:
                 __msg = __msg.split("^")
-                print(__msg[0])
                 if __msg[0] == "GO":    
                     Authorization.FIO_employee = __msg[1]
                     print(Authorization.FIO_employee)
                     self.destroy()
                     time.sleep(0.5)
-                    Main()
+                    MainFN()
                 elif __msg[0] == "NOLOG":       
                     messagebox.showinfo("Ошибка", "Нет такого пользователя!")
                 elif __msg[0] == "Fail":
@@ -402,28 +406,15 @@ class Root(Tk):
         self['bg'] = "gray10"
         self.__ShowMenu()
 
-    #def __configure_handler(self, event):
-    #    self.update_idletasks()
-    #    time.sleep(0.1)
-    # Сортируем данные с сервера
-    def Sort(self, ReceivedData = tuple()):
-        try:
-            __dataMessage = ReceivedData.split('#')
-            __ReceivedMsg = (tuple(__s.split('^')) for __s in __dataMessage)
-            __ReceivedMsg = (__x for __x in __ReceivedMsg if __x != ('',))
-            return __ReceivedMsg
-        except AttributeError as err:
-            messagebox.showinfo("Ошибка", err)
-
     # Функция запрашивает данные
     def Query_all(self):
-        __Received = InitConnection(data = "ALLQUERY")
-        __Sorted = self.Sort(ReceivedData = __Received)
+        __Received = Internet().IntoNetwork(data = "ALLQUERY")
+        __Sorted = Sort(ReceivedData = __Received)
         Root.table.UpdateTable(rs = __Sorted)
         Root.isfull_label.configure(text = "Все заявки")
-        messagebox.showinfo("Внимание", "Таблица успешно обновлена!")
-        # Функция отправляет полученные данные на сервер с ключевым словом и разделителями 
+        messagebox.showinfo("Внимание", "Таблица успешно обновлена!") 
 
+    # Функция отправляет полученные данные на сервер с ключевым словом и разделителями
     def Insert_into(self):
         __now = datetime.now()
         __d_string = __now.strftime("%d-%m-%Y")
@@ -438,13 +429,13 @@ class Root(Tk):
         else:
             __request = "^".join(("INSERT", *__variables))
                     
-            __ReceivedData = InitConnection(data = __request)
+            __ReceivedData = Internet().IntoNetwork(data = __request)
             Root.isfull_label.configure(text = "")
             messagebox.showinfo("Data:", __ReceivedData)
 
-            __tuple_for_table = ((__variables[11], __variables[0], __variables[1], __variables[2], __variables[3], __variables[4], \
+            __tuple_for_table = ((__variables[11], __variables[0], __variables[1], __variables[2], __variables[3], __variables[4],
             __variables[5], __variables[6], __variables[7], __variables[8]))
-            Root.table.AddQuery(entry = (__tuple_for_table))        
+            Root.table.AddQuery(entry = (__tuple_for_table))
         
     # Функция ищет данные в таблице
     def Search(self, ID = int()):
@@ -479,7 +470,7 @@ class Root(Tk):
             \nЗакройте заявку перед тем как удалить")
         else:
             __request = "^".join(("DELETE", __DADR))
-            __ReceivedData = InitConnection(data = __request)
+            __ReceivedData = Internet().IntoNetwork(data = __request)
             messagebox.showinfo("Data:", __ReceivedData)
             # Для Таблицы
             Root.table.DeleteQuery(adr = __DADR)
@@ -495,7 +486,7 @@ class Root(Tk):
             messagebox.showinfo("Ошибка", "Ошибка в тексте!")
         else:
             __request = "^".join(("UPDATE", *__variables))
-            __ReceivedData = InitConnection(data = __request)
+            __ReceivedData = Internet().IntoNetwork(data = __request)
             messagebox.showinfo("Data:", __ReceivedData)
 
             __gr_var = ((__variables[9], __variables[0], __variables[1], __variables[2], __variables[3], __variables[4], \
@@ -504,22 +495,22 @@ class Root(Tk):
 
     # Функция вызова окна регистрации
     def __RegWindow(self):
-        __RCVD = InitConnection(data = "USERQUERY")
-        __srt = self.Sort(ReceivedData = __RCVD)
-        time.sleep(0.2)
+        __RCVD = Internet().IntoNetwork(data = "USERQUERY^")
+        __srt = Sort(ReceivedData = __RCVD)
         Registration(self, __srt)  
 
     def __confirm_delete(self):
         message = "Закончить работу с программой?"
         if messagebox.askyesno(message = message, parent = self):
             self.destroy()
+            os._exit(0)
 
     def __tick(self):
         __time_string = time.strftime('%H:%M:%S')
         self.__clock.config(text = __time_string)
         self.__clock.after(200, self.__tick)
 
-    def __HideMenu(self, widg = tuple()):
+    def __HideMenu(self, widg = tuple()):   
         self.update_idletasks()
         [__i.place_forget() for __i in widg]
         Root.table.place(relwidth = 0.98, relheight = 0.90, relx = 0.01, rely = 0.05)
@@ -568,20 +559,21 @@ class Root(Tk):
             self.__delete_button.place(relwidth = 0.16, relheight = 0.05, relx = 0.10, rely = 0.75)
 
 # Главная функция для взаимодействия с основным окном
-def Main():             
+def MainFN():             
     __now = datetime.now()
     __d_strg = __now.strftime("%d.%m.%Y")
 
     # Первое соединение с сервером, запрос заявок на сегодня 
-    __Received = InitConnection(data = '^'.join(("CURQUERY",__d_strg)))
-    if __Received == 'None':
+    __Received = Internet().IntoNetwork(data = '^'.join(["CURQUERY",__d_strg]))
+    __Received = __Received.split('^')
+    if __Received[0] == 'No':
         time.sleep(0.2)
-        Main.mainroot = Root()
+        MainFN.mainroot = Root()
         Root.isfull_label.configure(text = "На сегодня заявок нет")
     else:
         __Sorted = Sort(ReceivedData = __Received)
         time.sleep(0.2)
-        Main.mainroot = Root(__Sorted)
+        MainFN.mainroot = Root(__Sorted)
         Root.isfull_label.configure(text = "Заявки на сегодня:")  
 
 # Запуск программы
