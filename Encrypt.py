@@ -10,45 +10,31 @@ import time
 
 class Internet:
     __save_path = 'C:/ПО Заявки/Сервер Python/secret.key'
-    def IntoNetwork(self, data, host = 'localhost', port = 43333, sock = None):
-        if sock is None:
-            try:
-                # create_connection возвращает ссылку на существующий сокет для подключения
-                self._sock = create_connection((host, port))
-            except error as __err:
-                messagebox.showinfo('Ошибка', __err)
-            else:
-                try:
-                    __rst = self.ToConnect(data)
-                    return __rst
-                except error as err:
-                    print(err)
-        else:
-            self._sock = sock
-            try:
-                __rst = self.ToConnect(data)
-                return __rst
-            except error as err:
-                print(err)
+    def IntoNetwork(self, data, host = 'localhost', port = 43333):
+        try:
+            # create_connection возвращает ссылку на существующий сокет для подключения
+            self._sock = create_connection((host, port))
+            __rst = self.ToConnect(data)
+            return __rst
+        except error as __err:
+            messagebox.showinfo('Ошибка', __err)
 
     def ToConnect(self, data):
         __HEADER = 64
         try:
             __query = self.encrypt_message(data)
             self._sock.sendall(__query)
-            self._sock.send(b'^\x00')
+            self._sock.send(b'^\n')
             while True:
                 __msg_length = self._sock.recv(__HEADER).decode('utf8')
                 __msg = self._sock.recv(int(__msg_length))
                 if not __msg:
                     break
                 __ready = self.decrypt_message(__msg)
-                return __ready
+                return __ready      
         except (UnicodeDecodeError, error, ValueError, OSError, InterruptedError) as __err:
             messagebox.showinfo("Ошибка", __err)
             return False
-        finally:
-            self._sock.close()
 
     def decrypt_message(self, message, path = __save_path):
         try:
@@ -59,7 +45,7 @@ class Internet:
             __decoded_message = __decrypted_message.decode('utf8')
             return __decoded_message
         except (OSError, Exception) as err:
-            return err
+            messagebox.showinfo('Ошибка', __err)
 
     def encrypt_message(self, message, path = __save_path):
         try:
@@ -70,8 +56,7 @@ class Internet:
             __encrypted_message = __f.encrypt(__encoded_message)
             return __encrypted_message
         except (OSError, Exception) as err:
-            print(err)
-            return err
+            messagebox.showinfo('Ошибка', __err)
 
 """
 # Функция расшифровывает данные
