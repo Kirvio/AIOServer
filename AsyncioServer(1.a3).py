@@ -330,9 +330,11 @@ class MyServer:
             finally:
                 if handle_task in done:
                     handle_task.cancel()
-                    await asyncio.shield(\
-                          asyncio.wait_for(\
-                                           client_done(handle_task), timeout=5.0))
+                    done_task = asyncio.create_task(client_done(handle_task))
+                    done, pending = await asyncio.shield(\
+                                          asyncio.wait({done_task}))
+                    if done_task in done:
+                        done_task.cancel()
 
     async def handle_client(self, client_reader, client_writer):
 
@@ -342,48 +344,45 @@ class MyServer:
         await asyncio.sleep(1 ** (1 / random.random()))
         while True:
             # client_reader waits to reads data till EOF '\n'
-            data = (await asyncio.shield(\
-                          asyncio.wait_for(\
-                                           client_reader.readline(), timeout=10.0)))
+            read_data = asyncio.create_task(client_reader.readline())
             # if connection established
-            if data:
-                decrypted_data = (await asyncio.shield(\
-                                        asyncio.wait_for(\
-                                                         AsyncioBlockingIO().decrypt_message(data), timeout=5.0)))
-                message = decrypted_data.split("^")
-                try:
-                    addr = client_writer.get_extra_info('peername')
-                    self.log.info(f"Connected to {addr}")
-                    print(f"Connected to {addr}")
+            if read_data:
+                done, pending = await asyncio.shield(\
+                                          asyncio.wait({read_data}))
+                if read_data in done:
+                    received_query = read_data.result()
+                    decrypt_data_task = asyncio.create_task(AsyncioBlockingIO().decrypt_message(received_query))
+                    done, pending = await asyncio.shield(\
+                                          asyncio.wait({decrypt_data_task}))
+                    if decrypt_data_task in done:
+                        decrypted_data = decrypt_data_task.result()
+                        message = decrypted_data.split("^")
+                        try:
+                            addr = client_writer.get_extra_info('peername')
+                            self.log.info(f"Connected to {addr}")
+                            print(f"Connected to {addr}")
 
-                    data_from_db = (await asyncio.shield(\
-                                          asyncio.wait_for(\
-                                                           self.access_db(SQLlist=message), timeout=5.0)))
-                    self.log.info("query in database done great")
-                    print("query in database done great")
-                except (OSError, RuntimeError, Exception,\
-                        asyncio.TimeoutError, asyncio.CancelledError):
-                    self.log.error("Exception occurred", exc_info=True)
-                    raise
-                finally:
-
-                    # creating Task to write response for our client
-                    try:
-                        write_task = asyncio.create_task(\
-                                                         self.write_response(client_writer, data_from_db))
-                        done, pending = await asyncio.shield(\
-                                              asyncio.wait({write_task}))
-                    except (OSError, asyncio.CancelledError,\
-                            asyncio.TimeoutError, RuntimeError, ConnectionError):
-                        self.log.error("Exception occurred", exc_info=True)
-                        raise
-                    finally:
-                        if write_task in done:
-                            self.log.info("writer writed response to client, yeahhhh")
-                            print("writer writed response to client, yeahhhh")
+                            db_task = asyncio.create_task(self.access_db(SQLlist=message))
+                            done, pending = await asyncio.shield(\
+                                                asyncio.wait({db_task}))
+                            if db_task in done:
+                                data_from_db = db_task.result()
+                                self.log.info("query in database done great")
+                                print("query in database done great")
+                                write_task = asyncio.create_task(\
+                                                                self.write_response(client_writer, data_from_db))
+                                done, pending = await asyncio.shield(\
+                                                      asyncio.wait({write_task}))
+                                if write_task in done:
+                                    self.log.info("writer writed response to client, yeahhhh")
+                                    print("writer writed response to client, yeahhhh")
+                        except (OSError, RuntimeError, Exception,\
+                                asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
+                            self.log.error("Exception occurred", exc_info=True)
+                            raise
             else:
                 self.log.info("End Connection")
-                print('End Connection')
+                print("End Connection")
                 return
 
     async def write_response(self, client_writer, data):
@@ -392,22 +391,19 @@ class MyServer:
         """
 
         # Encrypts a new message and calculate it's length to send
-        try:
-            query = (await asyncio.shield(\
-                           asyncio.wait_for(\
-                                            AsyncioBlockingIO().encrypt_message(data), timeout=5.0)))
+        encrypt_task = asyncio.create_task(AsyncioBlockingIO().encrypt_message(data))
+        done, pending = await asyncio.shield(\
+                                        asyncio.wait({encrypt_task}))
+        if encrypt_task in done:
+            query = encrypt_task.result()
             query_length = len(query)
             send_length = str(query_length).encode('utf8')
             send_length += b' ' * (self.HEADER - len(send_length))
-        except (Exception, TypeError):
-            self.log.error("Exception occurred", exc_info=True)
-            raise
-        finally:
             try:
                 client_writer.write(send_length)
                 client_writer.write(query)
-            except (Exception, OSError, ConnectionError,\
-                    asyncio.CancelledError, asyncio.TimeoutError):
+            except (Exception, OSError, ConnectionError, RuntimeError,\
+                    asyncio.CancelledError, asyncio.InvalidStateError, asyncio.TimeoutError):
                 self.log.error("Exception occured", exc_info=True)
                 raise
             finally:
@@ -443,7 +439,6 @@ if __name__ == "__main__":
     f_handler.setFormatter(f_format)
     log.addHandler(f_handler)
     try:
-
         # Starting our server and loop with debug mode
         asyncio.run(Server.start(), debug=True)
         loop = asyncio.get_running_loop()
