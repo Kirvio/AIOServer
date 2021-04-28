@@ -19,29 +19,18 @@ class MyServer:
     HEADER = 64
 
     def __init__(self):
-
+        """constracts or class as object"""
         self.log = logging.getLogger(__name__)
 
         self.clients = {}
 
     async def enter(self, db, SQLlist=tuple()):
-        """This function is for the authorization purposes
-           when user wants to enter the programm,
-           he enters his login and password
-           after that, this information is sent
-           via TCP protocol (in encrypted format)
-           and when server received this information,
-           he checks users Login and Password
-           with Login and Password in database (checks password hash)
-           after this data was decrypted
-        """
-
         try:
             Log, Passs = SQLlist[1], SQLlist[2]
             cursor = await db.execute("SELECT IIF(Login = :Login,\
                                       (SELECT Password FROM Cipher), 'NOLOG'), IIF(Login = :Login,\
                                       (SELECT employee_FIO FROM Cipher), 'NOLOG') FROM Cipher",
-                                      {'Login': Log })
+                                      {'Login': Log})
             msg = await cursor.fetchall()
 
             for i in msg:
@@ -49,11 +38,10 @@ class MyServer:
                     self.log.info("Попытка входа с неправильным логином")
                     return i[0]
                 else:
-                    check_ = (await asyncio.shield(\
-                                    asyncio.wait_for(\
-                                                     AsyncioBlockingIO().check_pass(Passs, i[0]), timeout=5.0)))
+                    check_ = (await asyncio.wait_for(\
+                                                     AsyncioBlockingIO().check_pass(Passs, i[0]), timeout=5.0))
                     if check_:
-                        self.log.info(f"Сотрудник {Log!r} авторизировался")
+                        self.log.info(f"Сотрудник {Log} авторизировался")
                         msg = "^".join(["GO", i[1]])
                     else:
                         self.log.info("Попытка входа с неправильным логином")
@@ -71,15 +59,14 @@ class MyServer:
         try:
             id_, login, password, fio = SQLlist[1], SQLlist[2], SQLlist[3], SQLlist[4]
 
-            new_hash = (await asyncio.shield(\
-                              asyncio.wait_for(\
-                                               AsyncioBlockingIO().to_hash_password(password), timeout=5.0)))
+            new_hash = (await asyncio.wait_for(\
+                                               AsyncioBlockingIO().to_hash_password(password), timeout=5.0))
             cursor = await db.execute("INSERT INTO Cipher (ID, Login, Password, employee_FIO)\
                                        VALUES (:ID, :Login, :Password, :employee_FIO)",\
                                        {'ID': id_, 'Login': login, 'Password': new_hash, 'employee_FIO': fio})
             await db.commit()
 
-            self.log.info(f"Сотрудник {fio!r} зарегистрирован")
+            self.log.info(f"Сотрудник {fio} зарегистрирован")
         except (OSError, DatabaseError, IndexError, Exception):
             self.log.error("Exception occurred", exc_info=True)
             raise
@@ -96,7 +83,7 @@ class MyServer:
             self.log.error("Exception occurred", exc_info=True)
             raise
         finally:
-            self.log.info(f"Сотрудник {id_!r} удален из БД")
+            self.log.info(f"Сотрудник {id_} удален из БД")
             msg = "Пользователь удален"
             return msg
 
@@ -118,7 +105,7 @@ class MyServer:
             self.log.error("Exception occurred", exc_info=True)
             raise
         finally:
-            self.log.info(f"Запрос на все заявки")
+            self.log.info("Запрос на все заявки")
             return print_records
 
     async def userquery(self, db):
@@ -136,7 +123,7 @@ class MyServer:
             self.log.error("Exception occurred", exc_info=True)
             raise
         finally:
-            self.log.info(f"Запрос на информацию о сотрудниках")
+            self.log.info("Запрос на информацию о сотрудниках")
             return print_logins
 
     async def curquery(self, db, SQLlist=tuple()):
@@ -145,15 +132,15 @@ class MyServer:
             print_records = ''
             cursor = await db.execute("SELECT RecDate, FIO, address, telephone,\
                                        reason, information, for_master, master, record_value, Category,\
-                                       FIO_employee, RegDate FROM records WHERE RecDate = :RecDate",
-                                       { 'RecDate': recdate})
+                                       FIO_employee, RegDate FROM records WHERE RecDate = :RecDate",\
+                                       {'RecDate': recdate})
             records = await cursor.fetchall()
 
             if records == []:
                 print("На текущий день ничего нет")
                 print_records = 'No'
             else:
-                self.log.info(f"Запрос на текущие заявки")
+                self.log.info("Запрос на текущие заявки")
                 for record in records:
                     print_records += '^'.join((str(record[0]), str(record[1]),\
                                                str(record[2]), str(record[3]), str(record[4]), str(record[5]),\
@@ -215,7 +202,7 @@ class MyServer:
             self.log.error("Exception occurred", exc_info=True)
             raise
         finally:
-            self.log.info(f"Запрос на удаление заявки выполнен")
+            self.log.info("Запрос на удаление заявки выполнен")
             msg = 'Запись удалена'
             return msg
 
@@ -250,7 +237,7 @@ class MyServer:
             self.log.error("Exception occurred", exc_info=True)
             raise
         finally:
-            self.log.info(f"Запрос на обновление заявки выполнен")
+            self.log.info("Запрос на обновление заявки выполнен")
             msg = "Запись обновлена"
             return msg
 
@@ -275,7 +262,7 @@ class MyServer:
                                                        self.enter(db, SQLlist), timeout=5.0)))
                     elif keyword == "REGISTER":
                         data = (await asyncio.shield(\
-                                     asyncio.wait_for(\
+                                      asyncio.wait_for(\
                                                       self.register(db, SQLlist), timeout=5.0)))
                     elif keyword == "DELETEUSER":
                         data = (await asyncio.shield(\
@@ -306,7 +293,7 @@ class MyServer:
                                       asyncio.wait_for(\
                                                        self.update(db, SQLlist), timeout=5.0)))
                     else:
-                        self.log.info(f"Поступил неправильный запрос")
+                        self.log.info("Поступил неправильный запрос")
                         data = "Неправильный запрос"
             except (Exception, OSError, DatabaseError, RuntimeError):
                 self.log.error("Exception occured", exc_info=True)
@@ -317,9 +304,11 @@ class MyServer:
     async def accept_client(self, client_reader, client_writer):
         """This function is used to accept client connection"""
 
+        # when hadle_client Task in done state, closing connection
+        # and deleting connection from connections list
         async def client_done(task):
             del self.clients[task]
-            print('client task done', file = sys.stderr)
+            print("client task done", file = sys.stderr)
             client_writer.close()
             await client_writer.wait_closed()
 
@@ -344,15 +333,19 @@ class MyServer:
                     await asyncio.shield(\
                           asyncio.wait_for(\
                                            client_done(handle_task), timeout=5.0))
-    # Deadlock raises somewhere
+
     async def handle_client(self, client_reader, client_writer):
 
-        # Loop to handle client, when done it breaks
+        """handles incoming TCP connection from client"""
+
+        # blocking loop on random time to avoid deadlock
         await asyncio.sleep(1 ** (1 / random.random()))
         while True:
+            # client_reader waits to reads data till EOF '\n'
             data = (await asyncio.shield(\
                           asyncio.wait_for(\
                                            client_reader.readline(), timeout=10.0)))
+            # if connection established
             if data:
                 decrypted_data = (await asyncio.shield(\
                                         asyncio.wait_for(\
@@ -360,8 +353,8 @@ class MyServer:
                 message = decrypted_data.split("^")
                 try:
                     addr = client_writer.get_extra_info('peername')
-                    self.log.info(f"Connected to {addr!r}")
-                    print(f"Connected to {addr!r}")
+                    self.log.info(f"Connected to {addr}")
+                    print(f"Connected to {addr}")
 
                     data_from_db = (await asyncio.shield(\
                                           asyncio.wait_for(\
@@ -373,13 +366,15 @@ class MyServer:
                     self.log.error("Exception occurred", exc_info=True)
                     raise
                 finally:
+
+                    # creating Task to write response for our client
                     try:
                         write_task = asyncio.create_task(\
                                                          self.write_response(client_writer, data_from_db))
                         done, pending = await asyncio.shield(\
                                               asyncio.wait({write_task}))
                     except (OSError, asyncio.CancelledError,\
-                            asyncio.TimeoutError, ConnectionError):
+                            asyncio.TimeoutError, RuntimeError, ConnectionError):
                         self.log.error("Exception occurred", exc_info=True)
                         raise
                     finally:
@@ -391,29 +386,10 @@ class MyServer:
                 print('End Connection')
                 return
 
-    """
-    async def read_data(self, client_reader):
-        await asyncio.sleep(2 ** (1 / random.random()))
-        while True:
-            data = (await asyncio.shield(\
-                          asyncio.wait_for(\
-                                           client_reader.readline(), timeout=10.0)))
-            if data:
-                try:
-                    decrypted_data = (await asyncio.shield(\
-                                            asyncio.wait_for(\
-                                                             AsyncioBlockingIO().decrypt_message(data), timeout=5.0)))
-                    message = decrypted_data.split("^")
-                except (OSError, RuntimeError, asyncio.CancelledError,\
-                        asyncio.LimitOverrunError, asyncio.IncompleteReadError):
-                    self.log.error("Exception occurred", exc_info=True)
-                    raise
-                finally:
-                    return message
-            else:
-                break
-    """
     async def write_response(self, client_writer, data):
+        """This function encrypting data from DB query
+           and sends it to our client
+        """
 
         # Encrypts a new message and calculate it's length to send
         try:
@@ -430,14 +406,20 @@ class MyServer:
             try:
                 client_writer.write(send_length)
                 client_writer.write(query)
-            except (Exception, OSError, ConnectionError):
+            except (Exception, OSError, ConnectionError,\
+                    asyncio.CancelledError, asyncio.TimeoutError):
                 self.log.error("Exception occured", exc_info=True)
                 raise
             finally:
                 await client_writer.drain()
 
     async def start(self):
-
+        """This function starts our async TCP server
+           in event loop, reader and writer is passed to
+           coroutine accept_client, that responsible for
+           creating 'client connections' tasks in our server
+           that handles incoming connections
+        """
         self.server = await asyncio.start_server(self.accept_client,\
                                                  host='localhost', port=43333,\
                                                  family=socket.AF_INET,\
@@ -461,6 +443,8 @@ if __name__ == "__main__":
     f_handler.setFormatter(f_format)
     log.addHandler(f_handler)
     try:
+
+        # Starting our server and loop with debug mode
         asyncio.run(Server.start(), debug=True)
         loop = asyncio.get_running_loop()
         if loop.get_debug():
