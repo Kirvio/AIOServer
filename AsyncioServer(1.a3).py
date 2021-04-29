@@ -337,7 +337,6 @@ class MyServer:
                         done_task.cancel()
 
     async def handle_client(self, client_reader, client_writer):
-
         """handles incoming TCP connection from client"""
 
         # blocking loop on random time to avoid deadlock
@@ -376,14 +375,11 @@ class MyServer:
                                 if write_task in done:
                                     self.log.info("writer writed response to client, yeahhhh")
                                     print("writer writed response to client, yeahhhh")
+                                    return
                         except (OSError, RuntimeError, Exception,\
                                 asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
                             self.log.error("Exception occurred", exc_info=True)
                             raise
-            else:
-                self.log.info("End Connection")
-                print("End Connection")
-                return
 
     async def write_response(self, client_writer, data):
         """This function encrypting data from DB query
