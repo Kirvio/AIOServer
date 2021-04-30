@@ -84,7 +84,7 @@ class MyServer:
             raise
         finally:
             self.log.info(f"Сотрудник {id_} удален из БД")
-            msg = "Пользователь удален"
+            msg = "OK"
             return msg
 
     async def allquery(self, db):
@@ -156,11 +156,10 @@ class MyServer:
     async def insert(self, db, SQLlist=tuple()):
         try:
             fio, address, telephone, reason, information, for_master,\
-            information, for_master, master, record_value,\
-            category, fio_employee, regdate, recdate =\
-                                                       SQLlist[1], SQLlist[2], SQLlist[3],\
-                                                       SQLlist[4], SQLlist[5], SQLlist[6], SQLlist[7],\
-                                                       SQLlist[8], SQLlist[9], SQLlist[10], SQLlist[11], SQLlist[12]
+            master, record_value, category, fio_employee, regdate, recdate =\
+                                                                            SQLlist[1], SQLlist[2], SQLlist[3],\
+                                                                            SQLlist[4], SQLlist[5], SQLlist[6], SQLlist[7],\
+                                                                            SQLlist[8], SQLlist[9], SQLlist[10], SQLlist[11], SQLlist[12]
 
             await db.execute("INSERT INTO records (FIO, address, telephone, reason,\
                               information, for_master, master, record_value, Category,\
@@ -283,7 +282,7 @@ class MyServer:
                     elif keyword == "INSERT":
                         data = (await asyncio.shield(\
                                       asyncio.wait_for(\
-                                                       self.insert(db, SQLlist), tineout=5.0)))
+                                                       self.insert(db, SQLlist), timeout=5.0)))
                     elif keyword == "DELETE":
                         data = (await asyncio.shield(\
                                       asyncio.wait_for(\
@@ -343,14 +342,15 @@ class MyServer:
         await asyncio.sleep(1 ** (1 / random.random()))
         while True:
             # client_reader waits to reads data till EOF '\n'
-            read_data = asyncio.create_task(client_reader.readline())
+            read_data_task = asyncio.create_task(client_reader.readline())
             # if connection established
-            if read_data:
+            if read_data_task:
                 done, pending = await asyncio.shield(\
-                                          asyncio.wait({read_data}))
-                if read_data in done:
-                    received_query = read_data.result()
-                    decrypt_data_task = asyncio.create_task(AsyncioBlockingIO().decrypt_message(received_query))
+                                      asyncio.wait({read_data_task}))
+                if read_data_task in done:
+                    received_query = read_data_task.result()
+                    decrypt_data_task = asyncio.create_task(\
+                                                            AsyncioBlockingIO().decrypt_message(received_query))
                     done, pending = await asyncio.shield(\
                                           asyncio.wait({decrypt_data_task}))
                     if decrypt_data_task in done:
@@ -363,19 +363,22 @@ class MyServer:
 
                             db_task = asyncio.create_task(self.access_db(SQLlist=message))
                             done, pending = await asyncio.shield(\
-                                                asyncio.wait({db_task}))
+                                                  asyncio.wait({db_task}))
                             if db_task in done:
                                 data_from_db = db_task.result()
                                 self.log.info("query in database done great")
                                 print("query in database done great")
                                 write_task = asyncio.create_task(\
-                                                                self.write_response(client_writer, data_from_db))
+                                                                 self.write_response(client_writer, data_from_db))
                                 done, pending = await asyncio.shield(\
                                                       asyncio.wait({write_task}))
                                 if write_task in done:
                                     self.log.info("writer writed response to client, yeahhhh")
                                     print("writer writed response to client, yeahhhh")
-                                    return
+                                    tasks = [read_data_task, decrypt_data_task, db_task, write_task]
+                                    cancel_ = [task.cancel() for task in tasks]
+                                    if cancel_:
+                                        return
                         except (OSError, RuntimeError, Exception,\
                                 asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
                             self.log.error("Exception occurred", exc_info=True)
@@ -389,7 +392,7 @@ class MyServer:
         # Encrypts a new message and calculate it's length to send
         encrypt_task = asyncio.create_task(AsyncioBlockingIO().encrypt_message(data))
         done, pending = await asyncio.shield(\
-                                        asyncio.wait({encrypt_task}))
+                              asyncio.wait({encrypt_task}))
         if encrypt_task in done:
             query = encrypt_task.result()
             query_length = len(query)
@@ -404,6 +407,7 @@ class MyServer:
                 raise
             finally:
                 await client_writer.drain()
+                encrypt_task.cancel()
 
     async def start(self):
         """This function starts our async TCP server
