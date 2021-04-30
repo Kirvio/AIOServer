@@ -8,7 +8,7 @@ import time
 class Internet:
     """Class for TCP connection with server
 
-    here is also used encryption with symmetric key
+       here is also used encryption with symmetric key
     """
 
     __save_path='C:/ПО Заявки/Сервер Python/secret.key'
@@ -27,8 +27,8 @@ class Internet:
     def ToConnect(self, data):
         """Function, that encrypts message before sending,
 
-        and (receiving/decoding) HEADER from server
-        that contents the length of the incoming message
+           and (receiving/decoding) HEADER from server
+           that contents the length of the incoming message
         """
 
         __HEADER = 64
