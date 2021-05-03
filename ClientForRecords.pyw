@@ -411,6 +411,13 @@ class Authorization(Tk):
             messagebox.showinfo("Ошибка:", exc)
 
     def __MainWindow(self):
+        """If authorization is complete
+           destroys Authorization window
+           and calls Root
+           Если авторизация прошла успешно
+           вызывает self.destroy() и запускает
+           главное окно
+        """
         try:
             __TupleAuth = (Authorization.__Login.get(), Authorization.__Password.get())
             __kek = [__x for __x in __TupleAuth if __x == '' or len(__x) > 30]
@@ -445,22 +452,19 @@ class Authorization(Tk):
                 except (Exception, IndexError) as exc:
                     messagebox.showinfo("Ошибка", exc)
 
-# Главное окно
 class Root(Tk):
+    """Main window class, inherites Tk class"""
 
-    # Конструктор класса
     def __init__(self, data=tuple()):
         super().__init__()
-        
-        # self.bind("<Configure>", self.__configure_handler)
-        self.protocol("WM_DELETE_WINDOW", self.__confirm_delete)
 
-        # Переменные
+        self.protocol("WM_DELETE_WINDOW", self.__confirm_exit)
+
         Root.Date, Root.FIO, Root.address, Root.telephone,\
         Root.reason, Root.information, Root.for_master,\
         Root.master, Root.r_var, Root.Category =\
-        StringVar(), StringVar(), StringVar(), StringVar(),\
-        StringVar(), StringVar(), StringVar(), StringVar(), StringVar(), StringVar()
+                                                StringVar(), StringVar(), StringVar(), StringVar(),\
+                                                StringVar(), StringVar(), StringVar(), StringVar(), StringVar(), StringVar()
         Root.r_var.set('Открыта')
 
         self.title(Authorization.FIO_employee)
@@ -474,8 +478,7 @@ class Root(Tk):
                            'ФИО', 'Адрес', 'Телефон', 'Причина', 'Время выполнения',\
                            'Для Мастера', 'Мастер', 'Состояние заявки', 'Категория',\
                            'ФИО сотрудника', 'Дата регистрации'), rows=data)
-        
-        # Поля для ввода
+
         self.FIO_entry = Entry(self, selectforeground='gray1',\
                                selectbackground='sky blue', font=("Times New Roman", 12),\
                                textvariable=Root.FIO, width=18)
@@ -501,7 +504,6 @@ class Root(Tk):
         self.__monthchoosen = ttk.Combobox(self,\
                                            font=("Times New Roman", 12), width=18, textvariable=Root.Category)
 
-        # Adding combobox drop down list
         self.__monthchoosen['values'] = ('Телевидение', 'Интернет', 'Пакет')
 
         self.__monthchoosen.current()
@@ -516,7 +518,6 @@ class Root(Tk):
                                foreground='white', borderwidth=2,\
                                year=int(__y_string), date_pattern='dd.MM.yyyy')
 
-        # Описание полей
         self.__category_label = Label(self, bg="gray10",\
                                       fg="white", font=("Times New Roman", 12),\
                                       text="Выберите категорию:")
@@ -555,7 +556,6 @@ class Root(Tk):
                                   fg="white", font=("Times New Roman", 12))
         self.__tick()
 
-        # Кнопки
         self.__r1 = Radiobutton(self, activeforeground='White',\
                                 activebackground='gray10', bg="gray10",\
                                 font=("Times New Roman", 12), fg='White',\
@@ -589,20 +589,19 @@ class Root(Tk):
                                      self.address_entry, self.telephone_entry, self.reason_entry,\
                                      self.information_entry, self.for_master_entry, self.master_entry), dell=1))
 
-        # Где они расположены
         __m = Menu(self)
         __m_edit = Menu(__m, font=("Times New Roman", 11), tearoff=0)
         __m.add_cascade(menu=__m_edit, label="Меню")
         __m_edit.add_command(label="Скрыть меню",\
-                             command=lambda: self.__HideMenu(widg=(self.__category_label,\
-                             self.__FIO_label, self.__address_label, self.__telephone_label,\
-                             self.__reason_label, self.__information_label, self.__for_master_label,\
-                             self.__master_label, self.__record_value_label, self.__data_label,\
-                             self.FIO_entry, self.address_entry, self.telephone_entry,\
-                             self.reason_entry, self.information_entry, self.for_master_entry,\
-                             self.master_entry, self.__r1, self.__r2, self.__cal, self.__monthchoosen,\
-                             self.__delete_button, self.__add_button, self.__srch_button,\
-                             self.__update_button, self.__clear_button)))
+                             command=lambda: self.__HideMenu(widg=(self.__category_label, self.__FIO_label, self.__address_label,\
+                                                                   self.__telephone_label, self.__reason_label, self.__information_label,\
+                                                                   self.__for_master_label, self.__master_label, self.__record_value_label,\
+                                                                   self.__data_label, self.FIO_entry, self.address_entry,\
+                                                                   self.telephone_entry, self.reason_entry, self.information_entry,\
+                                                                   self.for_master_entry, self.master_entry, self.__r1,\
+                                                                   self.__r2, self.__cal, self.__monthchoosen,\
+                                                                   self.__delete_button, self.__add_button, self.__srch_button,\
+                                                                   self.__update_button, self.__clear_button)))
         __m_edit.add_command(label="Показать меню", command=self.__ShowMenu)
         __m_edit.add_separator()
         __m_edit.add_command(label="Экспорт в Excel",\
@@ -629,7 +628,7 @@ class Root(Tk):
         __m.add_command(label="О программе")
         __m.add_command(label="Выйти", command=self.destroy)
         try:
-            if Authorization.FIO_employee == 'Андрющенко Егор Валерьевич':                  
+            if Authorization.FIO_employee == 'Андрющенко Егор Валерьевич':
                 __m.add_command(label="Администрирование", command=self.__RegWindow)
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
@@ -639,8 +638,10 @@ class Root(Tk):
         self['bg'] = "gray10"
         self.__ShowMenu()
 
-    # Функция запрашивает данные
     def Query_all(self):
+        """Queries all records from server
+           Запрашивает все заявки с сервера
+        """
         try:
             __Received = Internet().IntoNetwork(data="ALLQUERY")
             __Sorted = Functions().Sort(ReceivedData=__Received)
@@ -651,23 +652,29 @@ class Root(Tk):
         finally:
             messagebox.showinfo("Внимание", "Таблица успешно обновлена!")
 
-    # Функция отправляет полученные данные на сервер с ключевым словом и разделителями
     def Insert_into(self):
+        """Sending records to server with
+           keyword to trigger INSERT query
+           in db on remote TCP server
+           Посылает запрос на сервер
+           с ключевым словом INSERT
+           чтобы добавить заявку в БД
+        """
         try:
             __now = datetime.now()
             __d_string = __now.strftime("%d-%m-%Y")
             __variables = (Root.FIO.get(), Root.address.get(), Root.telephone.get(),\
-                        Root.reason.get(), Root.information.get(),\
-                        Root.for_master.get(), Root.master.get(), Root.r_var.get(),\
-                        Root.Category.get(), Authorization.FIO_employee, __d_string, Root.Date.get())
+                           Root.reason.get(), Root.information.get(),\
+                           Root.for_master.get(), Root.master.get(), Root.r_var.get(),\
+                           Root.Category.get(), Authorization.FIO_employee, __d_string, Root.Date.get())
             __pattern = r'[A-Za-z]'
-            __kek = [__z for __z in __variables if __z == '' \
-                    or len(__z) > 100 or re.findall(__pattern, __z)]
+            __kek = [__z for __z in __variables if __z == ''\
+                     or len(__z) > 100 or re.findall(__pattern, __z)]
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
         finally:
             try:
-                # If length of the query more then 50 or 
+                # If length of the query more then 50 or
                 # contents engl letters or empty, call messagebox
                 if __kek:
                     messagebox.showinfo("Ошибка", "Ошибка в тексте!")
@@ -679,15 +686,20 @@ class Root(Tk):
                     messagebox.showinfo("Data:", __ReceivedData)
 
                     __list_for_table = [[__variables[11], __variables[0],\
-                                        __variables[1], __variables[2], __variables[3],\
-                                        __variables[4], __variables[5], __variables[6],\
-                                        __variables[7], __variables[8], __variables[9], __variables[10]]]
+                                         __variables[1], __variables[2], __variables[3],\
+                                         __variables[4], __variables[5], __variables[6],\
+                                         __variables[7], __variables[8], __variables[9], __variables[10]]]
                     Root.table.AddQuery(entry=__list_for_table)
             except (IndexError, Exception, TypeError) as exc:
                 messagebox.showinfo("Ошибка:", exc)
 
-    # Функция ищет данные в таблице
     def Search(self, ID=int()):
+        """Searching in our table for
+           record, with parameters which
+           correspond to the requested
+           Ищем в нашей таблице запись,
+           чьи параметры соответсвуют запрошенным
+        """
         try:
             __pattern = r'[A-Za-z]'
             if ID == 1:
@@ -711,8 +723,17 @@ class Root(Tk):
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 
-    # Функция отправляет на сервер запрос на удаление заявки
     def Delete_by_address(self):
+        """Sending address of the client
+           with keyword DELETE, wich triggers
+           DELETE query in DB on our server
+           and deletes record wich correspond
+           to this address
+           Отправляет адресс заявки клиента
+           с ключевым словом DELETE, которое
+           вызывает запрос удалить
+           в нашей БД на сервере
+        """
         try:
             __pattern = r'[A-Za-z]'
             __DADR = Root.address.get()
@@ -736,19 +757,27 @@ class Root(Tk):
                 except Exception as exc:
                     messagebox.showinfo("Ошибка:", exc)
 
-
-    # Функция отправляет запрос на сервер с ключевым словом обновить
     def Update_data(self):
+        """Sending data from record
+           to our server with keyword UPDATE
+           wich triggers UPDATE command in our DB
+           and updating the record that corresponds
+           to address of that client
+           Отправляет данные с заявки на сервер
+           с ключевым словом UPDATE, которое
+           вызывает UPDATE запрос в нашу БД
+           и обновляет заявку с нужным адрессом
+        """
         try:
             __variables = (Root.FIO.get(), Root.address.get(),\
-                        Root.telephone.get(), Root.reason.get(),\
-                        Root.information.get(), Root.for_master.get(),\
-                        Root.master.get(), Root.r_var.get(),\
-                        Root.Category.get(), Root.Date.get())
+                           Root.telephone.get(), Root.reason.get(),\
+                           Root.information.get(), Root.for_master.get(),\
+                           Root.master.get(), Root.r_var.get(),\
+                           Root.Category.get(), Root.Date.get())
 
             __pattern = r'[A-Za-z]'
             __kek = [__z for __z in __variables\
-                    if __z == '' or len(__z) > 100 or re.findall(__pattern, __z)]
+                     if __z == '' or len(__z) > 100 or re.findall(__pattern, __z)]
         except (TypeError, Exception, UnboundLocalError) as exc:
             messagebox.showinfo("Ошибка:", exc)
         finally:
@@ -761,14 +790,21 @@ class Root(Tk):
                     messagebox.showinfo("Data:", __ReceivedData)
 
                     __gr_var = [[__variables[9], __variables[0], __variables[1],\
-                                __variables[2], __variables[3], __variables[4],\
-                                __variables[5], __variables[6], __variables[7], __variables[8]]]
+                                 __variables[2], __variables[3], __variables[4],\
+                                 __variables[5], __variables[6], __variables[7], __variables[8]]]
                     Root.table.RenewQuery(trigger=__variables[0], entry=__gr_var)
             except (Exception, IndexError) as exc:
                 messagebox.showinfo("Ошибка:", exc)
 
     # Функция вызова окна регистрации
     def __RegWindow(self):
+        """Sending keyword USERQUERY to our server
+           wich triggers QUERY ALL command
+           in db on server from user table
+           Отправляет ключевое слово USERQUERY
+           на сервер, которые вызывает QUERY ALL
+           запрос в БД из нашей таблицы с пользователями
+        """
         try:
             __RCVD = Internet().IntoNetwork(data="USERQUERY^")
             __srt = Functions().Sort(ReceivedData=__RCVD)
@@ -776,7 +812,12 @@ class Root(Tk):
         except (Exception, UnboundLocalError) as exc:
             messagebox.showinfo("Ошибка:", exc)
 
-    def __confirm_delete(self):
+    def __confirm_exit(self):
+        """To confirm is user
+           want to exit our programm
+           Спрашивает, хочет ли пользователь
+           выйти из нашей программы
+        """
         try:
             message = "Закончить работу с программой?"
             if messagebox.askyesno(message=message, parent=self):
@@ -786,6 +827,9 @@ class Root(Tk):
             messagebox.showinfo("Ошибка:", exc)
 
     def __tick(self):
+        """Calculates current system time
+           Вычисляет текущее время
+        """
         try:
             __time_string = time.strftime('%H:%M:%S')
             self.__clock.config(text=__time_string)
@@ -794,6 +838,13 @@ class Root(Tk):
             messagebox.showinfo("Ошибка:", exc)
 
     def __HideMenu(self, widg=tuple()):
+        """Hides our menu with place_forget
+           and makes our table with records
+           more visible
+           Прячет наше меню с place_forget
+           и делает нашу таблицу с заявками
+           более видимой
+        """
         try:
             self.update_idletasks()
             [__i.place_forget() for __i in widg]
@@ -808,6 +859,13 @@ class Root(Tk):
             messagebox.showinfo("Ошибка:", exc)
 
     def __ShowMenu(self):
+        """Show hidden menu
+           and putting table with
+           records in it's place
+           Показывает спрятанное меню
+           и возвращает таблицу с заявками
+           на место
+        """
         self.update_idletasks()
         self.__category_label.place(relwidth=0.15,\
                                     relheight=0.03, relx=0.01, rely=0.05)
@@ -873,6 +931,10 @@ class Root(Tk):
         self.__curdate.place(relwidth=0.13,\
                              relheight=0.03, relx=0.38, rely=0.01)
         time.sleep(0.2)
+        # if username is equal to administrator username
+        # show administration panel
+        # если имя пользователя соответствует имени админа
+        # в меню добавляется панель администратора
         try:
             if Authorization.FIO_employee == 'Андрющенко Егор Валерьевич':
                 self.__delete_button.place(relwidth=0.16,\
@@ -880,8 +942,11 @@ class Root(Tk):
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 
-# Запуск программы
 if __name__ == '__main__':
+    # Run Authorization window 
+    # when programm starts running
+    # Запускаем окно авторизации
+    # когда программа запускается
     try:
         App = Authorization()
         App.mainloop()

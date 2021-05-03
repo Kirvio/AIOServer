@@ -378,6 +378,7 @@ class MyServer:
                                     tasks = [read_data_task, decrypt_data_task, db_task, write_task]
                                     cancel_ = [task.cancel() for task in tasks]
                                     if cancel_:
+                                        print('tasks canceled succesfully')
                                         return
                         except (OSError, RuntimeError, Exception,\
                                 asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
