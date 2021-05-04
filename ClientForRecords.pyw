@@ -18,6 +18,13 @@ class Functions:
     """Main functions"""
 
     def InsertInEntryes(self, entryes=tuple(), dell=int()):
+        """Insenrting values in entryes
+           if some values already there
+           delete previous values and insert new
+           Вставляет значения в поля ввода
+           если до этого были какие-то значения
+           удаляет предыдущие, вставляет текущие
+        """
         try:
             if dell == 1:
                 [__i.delete(0, END) for __i in entryes]
@@ -27,6 +34,9 @@ class Functions:
             messagebox.showinfo("Ошибка", err)
 
     def Sort(self, ReceivedData=tuple()):
+        """Sorting incoming messages
+           Сортирует входящие сообщения
+        """
         try:
             __dataMessage = ReceivedData.split('#')
             __ReceivedMsg = (tuple(__s.split('^')) for __s in __dataMessage)
@@ -36,8 +46,12 @@ class Functions:
         finally:
             return __ReceivedMsg
 
-    # Главная функция для взаимодействия с основным окном
     def MainFN(self):
+        """Function send query to server
+           and returns todays records
+           Функция посылает запрос на сервер
+           и возвращает сегодняшние заявки
+        """
         try:
             __now = datetime.now()
             __d_strg = __now.strftime("%d.%m.%Y")
@@ -45,7 +59,8 @@ class Functions:
             messagebox.showinfo("Ошибка:", exc)
         finally:
             try:
-                # Первое соединение с сервером, запрос заявок на сегодня
+                # Connect to server, query today's records
+                # Соединение с сервером, запрос заявок на сегодня
                 __Received = Internet().IntoNetwork(data='^'.join(["CURQUERY",__d_strg]))
                 if __Received == 'No':
                     time.sleep(0.2)
@@ -59,7 +74,6 @@ class Functions:
             except Exception as exc:
                 messagebox.showinfo("Ошибка:", exc)
 
-# Класс для работы с таблицей
 class Table(Frame):
     """Table for records"""
 
@@ -100,8 +114,11 @@ class Table(Frame):
         self.__tree.bind("<Double-Button-1>", self.__OnEvents)
         self.__tree.bind('<Return>', self.__OnEvents)
 
-    # Функция сортировки по столбцам
     def __treeview_sort_column(self, tv, col, reverse):
+        """Sorts table values by columns
+           Сортировка значений в таблице
+           по столбцам
+        """
         try: 
             l = [(tv.set(k, col), k) for k in tv.get_children('')]
             l.sort(reverse=reverse)
@@ -113,8 +130,12 @@ class Table(Frame):
         except (TypeError, AttributeError) as err:
             messagebox.showinfo("Ошибка", err)
 
-    # Функция двойного щелчка
     def __OnEvents(self, rt):
+        """Insert data from line in the table
+           into entryes for correction
+           Вставляет данные из строки в таблице
+           в поля ввода для корректировки
+        """
         try:
             __RT = Functions.mainroot
             __item = self.__tree.focus()
@@ -125,9 +146,9 @@ class Table(Frame):
                 if __item:
                     __data = self.__tree.item(__item)['values']
                     Functions().InsertInEntryes(entryes=((__RT.FIO_entry,str(__data[1])),\
-                    (__RT.address_entry,str(__data[2])), (__RT.telephone_entry,str(__data[3])),\
-                    (__RT.reason_entry,str(__data[4])), (__RT.information_entry,str(__data[5])),\
-                    (__RT.for_master_entry,str(__data[6])), (__RT.master_entry,str(__data[7]))))
+                                                         (__RT.address_entry,str(__data[2])), (__RT.telephone_entry,str(__data[3])),\
+                                                         (__RT.reason_entry,str(__data[4])), (__RT.information_entry,str(__data[5])),\
+                                                         (__RT.for_master_entry,str(__data[6])), (__RT.master_entry,str(__data[7]))))
                     __RT.r_var.set(str(__data[8])), __RT.Category.set(str(__data[9])),\
                     __RT.Date.set(str(__data[0]))
                 else:
@@ -136,8 +157,10 @@ class Table(Frame):
                     UnboundLocalError, TypeError) as exc:
                 messagebox.showinfo("Ошибка:", exc)
 
-    # Экспорт данных с таблицы в excel
     def Export(self, heading=tuple()):
+        """Export data from table in excel
+           Экспорт заявок с таблице в excel
+        """
         file = askopenfile(mode='w+', filetypes=[('Excel', '*.xlsx')])
         if file:
             try:
@@ -155,18 +178,25 @@ class Table(Frame):
                 messagebox.showinfo("Ошибка", err)
             finally:
                 workbook.close()
-                os.startfile('C:/ПО Заявки/Export.xlsx')
 
-    # Обновить данные в таблице
     def UpdateTable(self, rs=tuple()):
+        """Delete data from table and
+           insert new data
+           Удалить данные с таблицы и
+           вставить новые данные
+        """
         try:
             [self.__tree.delete(__i) for __i in self.__tree.get_children()]
             [self.__tree.insert('', END, values=__row) for __row in rs]
         except TypeError as err:
             messagebox.showinfo("Error", err)
 
-    # Функция поиска
     def SearchQuery(self, trigger=str()):
+        """Searching in the table for values
+           that correspond to specified values
+           Поиск в таблице значений, которые
+           соответствуют указанным критериям
+        """
         try:
             __selections = [__child for __child in self.__tree.get_children()\
                             if trigger in self.__tree.item(__child)['values']]
@@ -182,43 +212,47 @@ class Table(Frame):
         except TypeError as err:
             messagebox.showinfo("Error", err)
 
-    # Функция обновления строк
     def RenewQuery(self, trigger=str(), entry=tuple()):
+        """Renew changed line
+           Обновляет измененную строку
+        """
         try:
             __kek = [__child for __child in self.__tree.get_children()\
                      if trigger in self.__tree.item(__child)['values']]
-
             if __kek:
                 self.__tree.delete(__kek)
                 [self.__tree.insert('', END, values=__row) for __row in entry]
         except TypeError as err:
             messagebox.showinfo("Error", err)
 
-    # Функция данных в таблицу
     def AddQuery(self, entry=tuple()):
+        """Adds record to the table
+           Добавляет строку в таблицу
+        """
         try:
             [self.__tree.insert('', END, values=__row) for __row in entry]
         except TypeError as err:
             messagebox.showinfo("Error", err)
 
-    # Функция удаления строк с таблицы
     def DeleteQuery(self, adr):
+        """Deleting record by address
+           Удаляет заявку по адрессу
+        """
         try:
             [self.__tree.delete(__child) for __child in self.__tree.get_children()\
              if adr in self.__tree.item(__child)['values']]
         except TypeError as err:
             messagebox.showinfo("Error", err)
 
-# Окно Регистрации
 class Registration(Toplevel):
     """Administration window for users"""
 
     def __init__(self, Parent, data=tuple()):
         super().__init__(Parent)
 
-        # Нужные переменные
-        Registration.ID, Registration.Login, Registration.Password,\
-        Registration.FIO_empl = StringVar(), StringVar(), StringVar(), StringVar()
+        Registration.ID, Registration.Login,\
+        Registration.Password, Registration.FIO_empl =\
+                                                      StringVar(), StringVar(), StringVar(), StringVar()
         self.title("Администрирование:")
 
         MyLeftPos = (self.winfo_screenwidth() - 800) / 2
@@ -226,7 +260,6 @@ class Registration(Toplevel):
 
         self.geometry( "%dx%d+%d+%d" % (800, 300, MyLeftPos, myTopPos))
 
-        # Описание для полей ввода
         self.__id_label = Label(self, bg="gray10", fg="white",\
                                 font=("Times New Roman", 12), text="ID:")
         self.__login_reg_label = Label(self, bg="gray10", fg="white",\
@@ -236,7 +269,6 @@ class Registration(Toplevel):
         self.__fio_reg_label = Label(self, bg="gray10", fg="white",\
                                      font=("Times New Roman", 12), text="ФИО:")
 
-        # Поля ввода
         self.__id_entry = Entry(self, textvariable=Registration.ID, width=40)
         self.__login_reg_entry = Entry(self,\
                                        textvariable=Registration.Login, width=40)
@@ -256,6 +288,7 @@ class Registration(Toplevel):
                                    headings=('ID', 'Login', 'Password', 'FIO'), rows=data)
 
         # Расположение полей ввода и т.д.
+        # Place entryes on needed position etc, etc.
         self.__id_entry.place(relwidth=0.08,\
                               relheight=0.08, relx=0.14, rely=0.70)
         self.__login_reg_entry.place(relwidth=0.15,\
@@ -281,6 +314,8 @@ class Registration(Toplevel):
                                 relheight=0.10, relx=0.65, rely=0.85)
         self.__del_button.place(relwidth=0.20,\
                                 relheight=0.10, relx=0.40, rely=0.85)
+
+        # Lock on changing window size
         # Запрет на иземение размера окна
         self.resizable(width=False, height=False)
 
@@ -295,14 +330,14 @@ class Registration(Toplevel):
                 messagebox.showinfo("Ошибка:", "Заполните все поля")
         except Exception as exc:
             raise
-        finally:
+        else:
             try:
                 __ToAuth = "^".join(("REGISTER",\
-                                        reg_tuple[0], reg_tuple[1], reg_tuple[2], reg_tuple[3]))
+                                                 reg_tuple[0], reg_tuple[1], reg_tuple[2], reg_tuple[3]))
                 __msg = Internet().IntoNetwork(data=__ToAuth)
             except Exception as exc:
                 raise
-            finally:
+            else:
                     if __msg == "Reg":
                         add_user = [[reg_tuple[0], reg_tuple[1], reg_tuple[2], reg_tuple[3]]]
                         Registration.table.AddQuery(entry=add_user)
@@ -330,7 +365,6 @@ class Registration(Toplevel):
             else:
                 pass
 
-# Окно авторизации
 class Authorization(Tk):
 
     def __init__(self):
@@ -349,16 +383,13 @@ class Authorization(Tk):
 
         self.geometry( "%dx%d+%d+%d" % (400, 200, MyLeftPos, myTopPos))
 
-        # Описание для полей ввода
         self.__login_label = Label(self, bg="gray10",\
                                    fg="white", font=("Times New Roman", 12),\
                                    text="Введите Логин:")
         self.__password_label = Label(self, bg="gray10",\
                                       fg="white", font=("Times New Roman", 12),\
                                       text="Введите пароль:")
-        #self.__forerver_label=Label(bg="gray10", fg="white", font=("Times New Roman", 12), text="Введите :")
 
-        # Поля ввода
         self.__login_entry = Entry(self,\
                                    font=("Times New Roman", 12), fg='gray1',\
                                    textvariable=Authorization.__Login, width=40)
@@ -371,11 +402,11 @@ class Authorization(Tk):
                                     command=lambda: self.__MainWindow())
 
         self.__chkbtn=Checkbutton(self, activeforeground='White',\
-                                    activebackground='gray10', bg="gray10",\
-                                    font=("Times New Roman", 12), fg='White',\
-                                    text="Показать пароль", selectcolor='gray10',\
-                                    variable=Authorization.__ent, onvalue=1, offvalue=0,\
-                                    command=lambda: self.__ShowPas())
+                                  activebackground='gray10', bg="gray10",\
+                                  font=("Times New Roman", 12), fg='White',\
+                                  text="Показать пароль", selectcolor='gray10',\
+                                  variable=Authorization.__ent, onvalue=1, offvalue=0,\
+                                  command=lambda: self.__ShowPas())
 
         self.__entr_button.place(relwidth=0.30,\
                                  relheight=0.16, relx=0.10, rely=0.75)
@@ -390,7 +421,6 @@ class Authorization(Tk):
         self.__chkbtn.place(relwidth=0.35,\
                             relheight=0.12, relx=0.06, rely=0.07)
 
-        # Запрет на иземение размера окна
         self.resizable(width=False, height=False)
         self['bg'] = "gray10"
 
@@ -425,13 +455,13 @@ class Authorization(Tk):
                 messagebox.showinfo("Ошибка", "Поля заполнены некорректно")
         except (UnboundLocalError, TypeError) as exc:
             messagebox.showinfo("Ошибка:", exc)
-        finally:
+        else:
             try:
                 __ToAuth = "^".join(("ENTER", *__TupleAuth))
                 __msg = Internet().IntoNetwork(data=__ToAuth)
             except Exception as exc:
                 messagebox.showinfo("Ошибка", exc)
-            finally:
+            else:
                 try:
                     if __msg:
                         __msg = __msg.split("^")
@@ -463,8 +493,8 @@ class Root(Tk):
         Root.Date, Root.FIO, Root.address, Root.telephone,\
         Root.reason, Root.information, Root.for_master,\
         Root.master, Root.r_var, Root.Category =\
-                                                StringVar(), StringVar(), StringVar(), StringVar(),\
-                                                StringVar(), StringVar(), StringVar(), StringVar(), StringVar(), StringVar()
+                                                 StringVar(), StringVar(), StringVar(), StringVar(),\
+                                                 StringVar(), StringVar(), StringVar(), StringVar(), StringVar(), StringVar()
         Root.r_var.set('Открыта')
 
         self.title(Authorization.FIO_employee)
@@ -474,10 +504,10 @@ class Root(Tk):
 
         self.geometry( "%dx%d+%d+%d" % (1200, 600, MyLeftPos, myTopPos))
 
-        Root.table = Table(self, headings=('Дата выполнения заявки',\
-                           'ФИО', 'Адрес', 'Телефон', 'Причина', 'Время выполнения',\
-                           'Для Мастера', 'Мастер', 'Состояние заявки', 'Категория',\
-                           'ФИО сотрудника', 'Дата регистрации'), rows=data)
+        Root.table = Table(self, headings=('Дата выполнения заявки', 'ФИО', 'Адрес',\
+                                           'Телефон', 'Причина', 'Время выполнения',\
+                                           'Для Мастера', 'Мастер', 'Состояние заявки', 'Категория',\
+                                           'ФИО сотрудника', 'Дата регистрации'), rows=data)
 
         self.FIO_entry = Entry(self, selectforeground='gray1',\
                                selectbackground='sky blue', font=("Times New Roman", 12),\
@@ -501,8 +531,8 @@ class Root(Tk):
                                   selectbackground='sky blue', font=("Times New Roman", 12),\
                                   textvariable=Root.master, width=18)
 
-        self.__monthchoosen = ttk.Combobox(self,\
-                                           font=("Times New Roman", 12), width=18, textvariable=Root.Category)
+        self.__monthchoosen = ttk.Combobox(self, font=("Times New Roman", 12),\
+                                           width=18, textvariable=Root.Category)
 
         self.__monthchoosen['values'] = ('Телевидение', 'Интернет', 'Пакет')
 
@@ -672,10 +702,8 @@ class Root(Tk):
                      or len(__z) > 100 or re.findall(__pattern, __z)]
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
-        finally:
+        else:
             try:
-                # If length of the query more then 50 or
-                # contents engl letters or empty, call messagebox
                 if __kek:
                     messagebox.showinfo("Ошибка", "Ошибка в тексте!")
                 else:
@@ -739,7 +767,7 @@ class Root(Tk):
             __DADR = Root.address.get()
         except (Exception, UnboundLocalError) as exc:
             messagebox.showinfo("Ошибка:", exc)
-        finally:
+        else:
             try:
                 if __DADR == '' or re.findall(__pattern, __DADR):
                     messagebox.showinfo("Ошибка", "Заполните адресс корректно")
@@ -748,7 +776,7 @@ class Root(Tk):
                                         \nЗакройте заявку перед тем как удалить")
             except Exception as exc:
                 messagebox.showinfo("Ошибка:", exc)
-            finally:
+            else:
                 try:
                     __request = "^".join(("DELETE", __DADR))
                     __ReceivedData = Internet().IntoNetwork(data=__request)
@@ -938,7 +966,7 @@ class Root(Tk):
         try:
             if Authorization.FIO_employee == 'Андрющенко Егор Валерьевич':
                 self.__delete_button.place(relwidth=0.16,\
-                                        relheight=0.05, relx=0.10, rely=0.75)
+                                           relheight=0.05, relx=0.10, rely=0.75)
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 

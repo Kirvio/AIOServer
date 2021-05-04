@@ -50,7 +50,7 @@ class MyServer:
         except (OSError, DatabaseError, IndexError, Exception):
             self.log.error("Exception occurred", exc_info=True)
             raise
-        finally:
+        else:
             return msg
 
     async def register(self, db, SQLlist=tuple()):
@@ -70,7 +70,7 @@ class MyServer:
         except (OSError, DatabaseError, IndexError, Exception):
             self.log.error("Exception occurred", exc_info=True)
             raise
-        finally:
+        else:
             msg = 'Reg'
             return msg
 
@@ -82,7 +82,7 @@ class MyServer:
         except (OSError, DatabaseError, IndexError, Exception):
             self.log.error("Exception occurred", exc_info=True)
             raise
-        finally:
+        else:
             self.log.info(f"Сотрудник {id_} удален из БД")
             msg = "OK"
             return msg
@@ -104,7 +104,7 @@ class MyServer:
         except (OSError, DatabaseError, IndexError, Exception):
             self.log.error("Exception occurred", exc_info=True)
             raise
-        finally:
+        else:
             self.log.info("Запрос на все заявки")
             return print_records
 
@@ -122,7 +122,7 @@ class MyServer:
         except (OSError, DatabaseError, IndexError, Exception):
             self.log.error("Exception occurred", exc_info=True)
             raise
-        finally:
+        else:
             self.log.info("Запрос на информацию о сотрудниках")
             return print_logins
 
@@ -150,7 +150,7 @@ class MyServer:
         except (OSError, DatabaseError, IndexError, Exception):
             self.log.error("Exception occurred", exc_info=True)
             raise
-        finally:
+        else:
             return print_records
 
     async def insert(self, db, SQLlist=tuple()):
@@ -185,7 +185,7 @@ class MyServer:
         except (OSError, DatabaseError, IndexError, Exception):
             self.log.error("Exception occurred", exc_info=True)
             raise
-        finally:
+        else:
             self.log.info(f"Новая заявка добавлена в БД")
             msg = "Новая запись добавлена"
             return msg
@@ -200,7 +200,7 @@ class MyServer:
         except (OSError, DatabaseError, IndexError, Exception):
             self.log.error("Exception occurred", exc_info=True)
             raise
-        finally:
+        else:
             self.log.info("Запрос на удаление заявки выполнен")
             msg = 'Запись удалена'
             return msg
@@ -235,7 +235,7 @@ class MyServer:
         except (OSError, DatabaseError, IndexError, Exception):
             self.log.error("Exception occurred", exc_info=True)
             raise
-        finally:
+        else:
             self.log.info("Запрос на обновление заявки выполнен")
             msg = "Запись обновлена"
             return msg
@@ -252,7 +252,7 @@ class MyServer:
         except IndexError:
             self.log.error("Exception occurred", exc_info=True)
             raise
-        finally:
+        else:
             try:
                 async with connect("address_book.db") as db:
                     if keyword == "ENTER":
@@ -297,7 +297,7 @@ class MyServer:
             except (Exception, OSError, DatabaseError, RuntimeError):
                 self.log.error("Exception occured", exc_info=True)
                 raise
-            finally:
+            else:
                 return data
 
     async def accept_client(self, client_reader, client_writer):
@@ -306,10 +306,15 @@ class MyServer:
         # when hadle_client Task in done state, closing connection
         # and deleting connection from connections list
         async def client_done(task):
-            del self.clients[task]
-            print("client task done", file = sys.stderr)
-            client_writer.close()
-            await client_writer.wait_closed()
+            try:
+                del self.clients[task]
+                print("client task done", file = sys.stderr)
+                client_writer.close()
+                await client_writer.wait_closed()
+            except (OSError, ConnectionError, RuntimeError,\
+                    asyncio.CancelledError, asyncio.InvalidStateError, asyncio.TimeoutError):
+                self.log.error("Exception occurred", exc_info=True)
+                raise
 
         # start a new Task to handle this specific client connection
         try:
@@ -318,22 +323,29 @@ class MyServer:
         except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
             self.log.error("Exception occurred", exc_info=True)
             raise
-        finally:
+        else:
             try:
                 self.clients[handle_task] = (client_reader, client_writer)
                 done, pending = await asyncio.shield(\
                                       asyncio.wait({handle_task}))
             except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
                 self.log.error("Exception occurred", exc_info=True)
+                handle_task.cancel()
                 raise
-            finally:
+            else:
                 if handle_task in done:
                     handle_task.cancel()
-                    done_task = asyncio.create_task(client_done(handle_task))
-                    done, pending = await asyncio.shield(\
-                                          asyncio.wait({done_task}))
-                    if done_task in done:
+                    try:
+                        done_task = asyncio.create_task(client_done(handle_task))
+                        done, pending = await asyncio.shield(\
+                                            asyncio.wait({done_task}))
+                    except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
+                        self.log.error("Exception occurred", exc_info=True)
                         done_task.cancel()
+                        raise
+                    else:
+                        if done_task in done:
+                            done_task.cancel()
 
     async def handle_client(self, client_reader, client_writer):
         """handles incoming TCP connection from client"""
@@ -346,44 +358,69 @@ class MyServer:
             # if connection established
             if read_data_task:
                 done, pending = await asyncio.shield(\
-                                      asyncio.wait({read_data_task}))
+                                        asyncio.wait({read_data_task}))
                 if read_data_task in done:
-                    received_query = read_data_task.result()
-                    decrypt_data_task = asyncio.create_task(\
-                                                            AsyncioBlockingIO().decrypt_message(received_query))
-                    done, pending = await asyncio.shield(\
-                                          asyncio.wait({decrypt_data_task}))
-                    if decrypt_data_task in done:
-                        decrypted_data = decrypt_data_task.result()
-                        message = decrypted_data.split("^")
-                        try:
-                            addr = client_writer.get_extra_info('peername')
-                            self.log.info(f"Connected to {addr}")
-                            print(f"Connected to {addr}")
+                    try:
+                        received_query = read_data_task.result()
+                        decrypt_data_task = asyncio.create_task(\
+                                                                AsyncioBlockingIO().decrypt_message(received_query))
+                        done, pending = await asyncio.shield(\
+                                            asyncio.wait({decrypt_data_task}))
+                    except (asyncio.TimeoutError, asyncio.CancelledError,\
+                            Exception, OSError):
+                        self.log.error("Exception occurred", exc_info=True)
+                        decrypt_data_task.cancel()
+                        break
+                        raise
+                    else:
+                        if decrypt_data_task in done:
+                            try:
+                                decrypted_data = decrypt_data_task.result()
+                                message = decrypted_data.split("^")
+                                addr = client_writer.get_extra_info('peername')
+                                self.log.info(f"Connected to {addr}")
+                                print(f"Connected to {addr}")
 
-                            db_task = asyncio.create_task(self.access_db(SQLlist=message))
-                            done, pending = await asyncio.shield(\
-                                                  asyncio.wait({db_task}))
-                            if db_task in done:
-                                data_from_db = db_task.result()
-                                self.log.info("query in database done great")
-                                print("query in database done great")
-                                write_task = asyncio.create_task(\
-                                                                 self.write_response(client_writer, data_from_db))
+                                db_task = asyncio.create_task(self.access_db(SQLlist=message))
                                 done, pending = await asyncio.shield(\
-                                                      asyncio.wait({write_task}))
-                                if write_task in done:
-                                    self.log.info("writer writed response to client, yeahhhh")
-                                    print("writer writed response to client, yeahhhh")
-                                    tasks = [read_data_task, decrypt_data_task, db_task, write_task]
-                                    cancel_ = [task.cancel() for task in tasks]
-                                    if cancel_:
-                                        print('tasks canceled succesfully')
-                                        return
-                        except (OSError, RuntimeError, Exception,\
-                                asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
-                            self.log.error("Exception occurred", exc_info=True)
-                            raise
+                                                    asyncio.wait({db_task}))
+                            except (asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError,\
+                                    OSError, Exception, RuntimeError):
+                                self.log.error("Exception occurred", exc_info=True)
+                                db_task.cancel()
+                                break
+                                raise
+                            else:
+                                if db_task in done:
+                                    try:
+                                        data_from_db = db_task.result()
+                                        self.log.info("query in database done great")
+                                        print("query in database done great")
+                                        write_task = asyncio.create_task(\
+                                                                         self.write_response(client_writer, data_from_db))
+                                        done, pending = await asyncio.shield(\
+                                                            asyncio.wait({write_task}))
+                                    except (asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError,\
+                                            OSError, Exception, RuntimeError):
+                                        self.log.error("Exception occurred", exc_info=True)
+                                        write_task.cancel()
+                                        break
+                                        raise
+                                    finally:
+                                        if write_task in done:
+                                            try:
+                                                self.log.info("writer writed response to client, yeahhhh")
+                                                print("writer writed response to client, yeahhhh")
+                                                tasks = [read_data_task, decrypt_data_task, db_task, write_task]
+                                                cancel_ = [task.cancel() for task in tasks]
+                                                if cancel_:
+                                                    print('tasks canceled succesfully')
+                                                    return
+                                            except (asyncio.TimeoutError, asyncio.InvalidStateError,\
+                                                    OSError, Exception, RuntimeError):
+                                                self.log.error("Exception occurred", exc_info=True)
+                                                break
+                                                raise
 
     async def write_response(self, client_writer, data):
         """This function encrypting data from DB query
@@ -391,24 +428,36 @@ class MyServer:
         """
 
         # Encrypts a new message and calculate it's length to send
-        encrypt_task = asyncio.create_task(AsyncioBlockingIO().encrypt_message(data))
-        done, pending = await asyncio.shield(\
-                              asyncio.wait({encrypt_task}))
-        if encrypt_task in done:
-            query = encrypt_task.result()
-            query_length = len(query)
-            send_length = str(query_length).encode('utf8')
-            send_length += b' ' * (self.HEADER - len(send_length))
-            try:
-                client_writer.write(send_length)
-                client_writer.write(query)
-            except (Exception, OSError, ConnectionError, RuntimeError,\
-                    asyncio.CancelledError, asyncio.InvalidStateError, asyncio.TimeoutError):
-                self.log.error("Exception occured", exc_info=True)
-                raise
-            finally:
-                await client_writer.drain()
-                encrypt_task.cancel()
+        try:
+            encrypt_task = asyncio.create_task(AsyncioBlockingIO().encrypt_message(data))
+            done, pending = await asyncio.shield(\
+                                asyncio.wait({encrypt_task}))
+        except (asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError,\
+                OSError, Exception, RuntimeError):
+            self.log.error("Exception occurred", exc_info=True)
+            raise
+        else:
+            if encrypt_task in done:
+                try:
+                    query = encrypt_task.result()
+                    query_length = len(query)
+                    send_length = str(query_length).encode('utf8')
+                    send_length += b' ' * (self.HEADER - len(send_length))
+                except Exception:
+                    self.log.error("Exception occurred", exc_info=True)
+                    raise
+                else:
+                    try:
+                        client_writer.write(send_length)
+                        client_writer.write(query)
+                    except (Exception, OSError, ConnectionError, RuntimeError,\
+                            asyncio.CancelledError, asyncio.InvalidStateError, asyncio.TimeoutError):
+                        self.log.error("Exception occured", exc_info=True)
+                        raise
+                    else:
+                        await client_writer.drain()
+                    finally:
+                        encrypt_task.cancel()
 
     async def start(self):
         """This function starts our async TCP server
@@ -447,5 +496,5 @@ if __name__ == "__main__":
             log.debug("Some exception")
     except KeyboardInterrupt:
         pass
-    finally:
+    else:
         loop.close()
