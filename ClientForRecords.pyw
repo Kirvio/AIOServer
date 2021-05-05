@@ -168,7 +168,7 @@ class Table(Frame):
                 worksheet = workbook.add_worksheet()
                 [worksheet.write(0, col_n, data) for col_n, data in enumerate(heading)]
                 __data = [self.__tree.item(__child)['values']\
-                        for __child in self.__tree.get_children()]
+                          for __child in self.__tree.get_children()]
 
                 for row_num, row_data in enumerate(__data):
                     for col_num, col_data in enumerate(row_data):
@@ -176,8 +176,9 @@ class Table(Frame):
                         worksheet.set_column(col_num, 5, 40)
             except Exception as err:
                 messagebox.showinfo("Ошибка", err)
-            finally:
+            else:
                 workbook.close()
+                messagebox.showinfo("Внимание", "Экспортировано успешно")
 
     def UpdateTable(self, rs=tuple()):
         """Delete data from table and
@@ -467,7 +468,6 @@ class Authorization(Tk):
                         __msg = __msg.split("^")
                         if __msg[0] == "GO":
                             Authorization.FIO_employee = __msg[1]
-                            print(Authorization.FIO_employee)
                             self.destroy()
                             time.sleep(0.5)
                             Functions().MainFN()
@@ -615,7 +615,7 @@ class Root(Tk):
 
         self.__clear_button = Button(self, font=("Times New Roman", 12),\
                                      fg="gray1", text="Очистить Поля Ввода", width=15,\
-                                     command=lambda: InsertInEntryes(entryes=(self.FIO_entry,\
+                                     command=lambda: Functions().InsertInEntryes(entryes=(self.FIO_entry,\
                                      self.address_entry, self.telephone_entry, self.reason_entry,\
                                      self.information_entry, self.for_master_entry, self.master_entry), dell=1))
 
@@ -635,7 +635,7 @@ class Root(Tk):
         __m_edit.add_command(label="Показать меню", command=self.__ShowMenu)
         __m_edit.add_separator()
         __m_edit.add_command(label="Экспорт в Excel",\
-                             command=lambda : Root.table.Export(heading=('Дата выполнения заявки', 'ФИО', 'Адрес', 'Телефон',\
+                             command=lambda: Root.table.Export(heading=('Дата выполнения заявки', 'ФИО', 'Адрес', 'Телефон',\
                                                                          'Причина', 'Время выполнения', 'Для Мастера',\
                                                                          'Мастер', 'Состояние заявки', 'Категория',\
                                                                          'ФИО сотрудника', 'Дата регистрации')))

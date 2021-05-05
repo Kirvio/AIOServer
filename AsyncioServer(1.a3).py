@@ -27,31 +27,29 @@ class MyServer:
     async def enter(self, db, SQLlist=tuple()):
         try:
             Log, Passs = SQLlist[1], SQLlist[2]
-            cursor = await db.execute("SELECT IIF(Login = :Login,\
-                                      (SELECT Password FROM Cipher), 'NOLOG'), IIF(Login = :Login,\
-                                      (SELECT employee_FIO FROM Cipher), 'NOLOG') FROM Cipher",
+            cursor = await db.execute("SELECT Password FROM Cipher WHERE Login = :Login",
                                       {'Login': Log})
-            msg = await cursor.fetchall()
-
-            for i in msg:
-                if i[0] == "NOLOG":
-                    self.log.info("Попытка входа с неправильным логином")
-                    return i[0]
+            msg_ = await cursor.fetchone()
+            if msg_:
+                check_ = (await asyncio.wait_for(\
+                                                 AsyncioBlockingIO().check_pass(Passs, msg_[0]), timeout=5.0))
+                if check_:
+                    cursor_ = await db.execute("SELECT employee_FIO FROM Cipher WHERE Login = :Login",
+                                               {'Login': Log})
+                    msg_ = await cursor_.fetchone()
+                    self.log.info(f"Сотрудник {Log} авторизировался")
+                    msg_ = "^".join(["GO", msg_[0]])
                 else:
-                    check_ = (await asyncio.wait_for(\
-                                                     AsyncioBlockingIO().check_pass(Passs, i[0]), timeout=5.0))
-                    if check_:
-                        self.log.info(f"Сотрудник {Log} авторизировался")
-                        msg = "^".join(["GO", i[1]])
-                    else:
-                        self.log.info("Попытка входа с неправильным логином")
-                        msg = "Fail"
+                    self.log.info("Попытка входа с неправильным паролем")
+                    msg_ = "Fail"
+            else:
+                msg_ = "NOLOG"
 
         except (OSError, DatabaseError, IndexError, Exception):
             self.log.error("Exception occurred", exc_info=True)
             raise
         else:
-            return msg
+            return msg_
 
     async def register(self, db, SQLlist=tuple()):
         """Register new User in our database with hashed password"""
@@ -256,49 +254,56 @@ class MyServer:
             try:
                 async with connect("address_book.db") as db:
                     if keyword == "ENTER":
-                        data = (await asyncio.shield(\
+                        enter_ = (await asyncio.shield(\
                                       asyncio.wait_for(\
                                                        self.enter(db, SQLlist), timeout=5.0)))
+                        return enter_
                     elif keyword == "REGISTER":
-                        data = (await asyncio.shield(\
+                        register_ = (await asyncio.shield(\
                                       asyncio.wait_for(\
                                                       self.register(db, SQLlist), timeout=5.0)))
+                        return register_
                     elif keyword == "DELETEUSER":
-                        data = (await asyncio.shield(\
-                                      asyncio.wait_for(\
-                                                       self.deleteuser(db, SQLlist), timeout=5.0)))
+                        delete_user_ = (await asyncio.shield(\
+                                              asyncio.wait_for(\
+                                                               self.deleteuser(db, SQLlist), timeout=5.0)))
+                        return delete_user_
                     elif keyword == "ALLQUERY":
-                        data = (await asyncio.shield(\
-                                      asyncio.wait_for(\
-                                                       self.allquery(db), timeout=5.0)))
+                        all_query_ = (await asyncio.shield(\
+                                            asyncio.wait_for(\
+                                                             self.allquery(db), timeout=5.0)))
+                        return all_query_
                     elif keyword == "USERQUERY":
-                        data = (await asyncio.shield(\
-                                      asyncio.wait_for(\
-                                                       self.userquery(db), timeout=5.0)))
+                        user_query_ = (await asyncio.shield(\
+                                             asyncio.wait_for(\
+                                                              self.userquery(db), timeout=5.0)))
+                        return user_query_
                     elif keyword == "CURQUERY":
-                        data = (await asyncio.shield(\
-                                      asyncio.wait_for(\
-                                                       self.curquery(db, SQLlist), timeout=5.0)))
+                        cur_query_ = (await asyncio.shield(\
+                                            asyncio.wait_for(\
+                                                             self.curquery(db, SQLlist), timeout=5.0)))
+                        return cur_query_
                     elif keyword == "INSERT":
-                        data = (await asyncio.shield(\
-                                      asyncio.wait_for(\
-                                                       self.insert(db, SQLlist), timeout=5.0)))
+                        insert_ = (await asyncio.shield(\
+                                         asyncio.wait_for(\
+                                                          self.insert(db, SQLlist), timeout=5.0)))
+                        return insert_
                     elif keyword == "DELETE":
-                        data = (await asyncio.shield(\
-                                      asyncio.wait_for(\
-                                                       self.delete(db, SQLlist), timeout=5.0)))
+                        delete_ = (await asyncio.shield(\
+                                         asyncio.wait_for(\
+                                                          self.delete(db, SQLlist), timeout=5.0)))
+                        return delete_
                     elif keyword == "UPDATE":
-                        data = (await asyncio.shield(\
-                                      asyncio.wait_for(\
-                                                       self.update(db, SQLlist), timeout=5.0)))
+                        update_ = (await asyncio.shield(\
+                                         asyncio.wait_for(\
+                                                          self.update(db, SQLlist), timeout=5.0)))
+                        return update_
                     else:
                         self.log.info("Поступил неправильный запрос")
                         data = "Неправильный запрос"
             except (Exception, OSError, DatabaseError, RuntimeError):
                 self.log.error("Exception occured", exc_info=True)
                 raise
-            else:
-                return data
 
     async def accept_client(self, client_reader, client_writer):
         """This function is used to accept client connection"""
@@ -467,7 +472,7 @@ class MyServer:
            that handles incoming connections
         """
         self.server = await asyncio.start_server(self.accept_client,\
-                                                 host='localhost', port=43333,\
+                                                 host='172.20.20.14', port=43333,\
                                                  family=socket.AF_INET,\
                                                  backlog=20, reuse_address=True)
 

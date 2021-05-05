@@ -13,9 +13,9 @@ class Internet:
 
     __save_path='C:/ПО Заявки/Сервер Python/secret.key'
 
-    # Function, to create connection to 
+    # Function, to create connection to
     # server with arguments, that defines the server
-    def IntoNetwork(self, data, host='localhost', port=43333):
+    def IntoNetwork(self, data, host='172.20.20.14', port=43333):
         try:
             # socket.create_connection returns link to socket object
             self._sock = create_connection((host, port))
@@ -66,5 +66,5 @@ class Internet:
             __encoded_message = message.encode('utf8')
             __encrypted_message = __f.encrypt(__encoded_message)
             return __encrypted_message
-        except (OSError, Exception) as err:
+        except (OSError, Exception) as __err:
             messagebox.showinfo('Ошибка', __err)
