@@ -43,7 +43,7 @@ class Functions:
             __ReceivedMsg = (__x for __x in __ReceivedMsg if __x != ('',))
         except (AttributeError, TypeError) as err:
             messagebox.showinfo("Ошибка", err)
-        finally:
+        else:
             return __ReceivedMsg
 
     def MainFN(self):
@@ -57,7 +57,7 @@ class Functions:
             __d_strg = __now.strftime("%d.%m.%Y")
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
-        finally:
+        else:
             try:
                 # Connect to server, query today's records
                 # Соединение с сервером, запрос заявок на сегодня
@@ -77,7 +77,6 @@ class Functions:
 class Table(Frame):
     """Table for records"""
 
-    # Инициирует функцию с таблицей в фрейме
     def __init__(self, Parent=None, headings=tuple(), rows=tuple()):
         super().__init__(Parent)
 
@@ -141,7 +140,7 @@ class Table(Frame):
             __item = self.__tree.focus()
         except (UnboundLocalError, TypeError) as exc:
             messagebox.showinfo("Ошибка:", exc)
-        finally:
+        else:
             try:
                 if __item:
                     __data = self.__tree.item(__item)['values']
@@ -334,7 +333,7 @@ class Registration(Toplevel):
         else:
             try:
                 __ToAuth = "^".join(("REGISTER",\
-                                                 reg_tuple[0], reg_tuple[1], reg_tuple[2], reg_tuple[3]))
+                                                reg_tuple[0], reg_tuple[1], reg_tuple[2], reg_tuple[3]))
                 __msg = Internet().IntoNetwork(data=__ToAuth)
             except Exception as exc:
                 raise
@@ -342,8 +341,6 @@ class Registration(Toplevel):
                     if __msg == "Reg":
                         add_user = [[reg_tuple[0], reg_tuple[1], reg_tuple[2], reg_tuple[3]]]
                         Registration.table.AddQuery(entry=add_user)
-                    elif __msg == "EX":
-                        messagebox.showinfo("Ошибка:", "Такой пользователь уже естьы")
                     else:
                         pass
 
@@ -353,12 +350,11 @@ class Registration(Toplevel):
             if id_ == "":
                 messagebox.showinfo("Ошибка", "Введите ID пользователя")
             else:
-                __ToDel = "^".join(("DELETEUSER",\
-                                    id_))
+                __ToDel = "^".join(("DELETEUSER", id_))
                 __msg = Internet().IntoNetwork(data=__ToDel)
         except Exception as exc:
             raise
-        finally:
+        else:
             if __msg == "OK":
                 __data = Internet().IntoNetwork(data="USERQUERY")
                 __sorted_data = Functions().Sort(ReceivedData=__data)
@@ -636,9 +632,9 @@ class Root(Tk):
         __m_edit.add_separator()
         __m_edit.add_command(label="Экспорт в Excel",\
                              command=lambda: Root.table.Export(heading=('Дата выполнения заявки', 'ФИО', 'Адрес', 'Телефон',\
-                                                                         'Причина', 'Время выполнения', 'Для Мастера',\
-                                                                         'Мастер', 'Состояние заявки', 'Категория',\
-                                                                         'ФИО сотрудника', 'Дата регистрации')))
+                                                                        'Причина', 'Время выполнения', 'Для Мастера',\
+                                                                        'Мастер', 'Состояние заявки', 'Категория',\
+                                                                        'ФИО сотрудника', 'Дата регистрации')))
 
         __m_search = Menu(__m, font=("Times New Roman", 11), tearoff=0)
         __m.add_cascade(menu=__m_search, label="Поиск")

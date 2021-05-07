@@ -12,6 +12,7 @@ class AsyncioBlockingIO:
     that runs CPU bound function in executor
     """
 
+    # Path to key for encryption and decryption
     save_path = 'C:/ПО Заявки/Сервер Python/secret.key'
 
     # Asyncio decorator that returns Future 
