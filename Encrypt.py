@@ -11,7 +11,7 @@ class Internet:
        here is also used encryption with symmetric key
     """
 
-    __save_path='C:/ПО Заявки/Сервер Python/secret.key'
+    __key_path='C:/PythonProgs/AIOServer/secret.key'
 
     # Function, to create connection to
     # server with arguments, that defines the server
@@ -20,9 +20,10 @@ class Internet:
             # socket.create_connection returns link to socket object
             self._sock = create_connection((host, port))
             __rst = self.ToConnect(data)
-            return __rst
         except error as __err:
             messagebox.showinfo('Ошибка', __err)
+        else:
+            return __rst
 
     def ToConnect(self, data):
         """Function, that encrypts message before sending,
@@ -47,24 +48,26 @@ class Internet:
             messagebox.showinfo("Ошибка", __err)
             return False
 
-    def decrypt_message(self, message, path=__save_path):
+    def decrypt_message(self, message, path=__key_path):
         try:
             with open(path, "rb") as __wr:
                 __key = __wr.read()
                 __f = FN(__key)
             __decrypted_message = __f.decrypt(message)
             __decoded_message = __decrypted_message.decode('utf8')
-            return __decoded_message
         except (OSError, Exception) as err:
             messagebox.showinfo('Ошибка', __err)
+        else:
+            return __decoded_message
 
-    def encrypt_message(self, message, path=__save_path):
+    def encrypt_message(self, message, path=__key_path):
         try:
             with open(path, "rb") as __wr:
                 __key = __wr.read()
                 __f = FN(__key)
             __encoded_message = message.encode('utf8')
             __encrypted_message = __f.encrypt(__encoded_message)
-            return __encrypted_message
         except (OSError, Exception) as __err:
             messagebox.showinfo('Ошибка', __err)
+        else:
+            return __encrypted_message

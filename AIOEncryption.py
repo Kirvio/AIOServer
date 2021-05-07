@@ -5,15 +5,20 @@ from cryptography.fernet import Fernet as FN
 import asyncio
 
 class AsyncioBlockingIO:
-    """class, that contents operations with blocking I/O(CPU bound).
+    """Class, that contents operations with blocking I/O(CPU bound).
 
-    To prevent blocking in event loop, 
-    use asyncify decorator, 
-    that runs CPU bound function in executor
+       To prevent blocking in event loop, 
+       use asyncify decorator, 
+       that runs CPU bound function in executor
+       В этом классе содержатся операции блокирующие
+       I/O(CPU bound), что-бы не допустить блока
+       используется декоратор asyncify
+       это функция запускает операции в отдельном потоке
+       метод .run_in_executor
     """
 
     # Path to key for encryption and decryption
-    save_path = 'C:/ПО Заявки/Сервер Python/secret.key'
+    key_path = 'C:/PythonProgs/AIOServer/secret.key'
 
     # Asyncio decorator that returns Future 
     # while running task in background thread 
@@ -26,28 +31,31 @@ class AsyncioBlockingIO:
         return inner
 
     @asyncify
-    def decrypt_message(self, message, path = save_path):
+    def decrypt_message(self, message, path = key_path):
         try:
             with open(path, "rb") as wr:
                 key = wr.read()
                 f = FN(key)
             decrypted_message = f.decrypt(message)
             decoded_message = decrypted_message.decode('utf8')
-            return decoded_message
         except (OSError, Exception) as err:
             raise
+        else:
+            return decoded_message
 
     @asyncify
-    def encrypt_message(self, message, path = save_path):
+    def encrypt_message(self, message, path = key_path):
         try:
             with open(path, "rb") as wr:
                 key = wr.read()
                 f = FN(key)
             encoded_message = str(message).encode('utf8')
             encrypted_message = f.encrypt(encoded_message)
-            return encrypted_message
         except (OSError, Exception) as err:
             raise
+        else:
+            return encrypted_message
+
 
     @asyncify
     def check_pass(self, password, hashed_pass):

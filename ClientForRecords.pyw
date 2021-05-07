@@ -378,7 +378,7 @@ class Authorization(Tk):
         MyLeftPos = (self.winfo_screenwidth() - 400) / 2
         myTopPos = (self.winfo_screenheight() - 200) / 2
 
-        self.geometry( "%dx%d+%d+%d" % (400, 200, MyLeftPos, myTopPos))
+        self.geometry("%dx%d+%d+%d" % (400, 200, MyLeftPos, myTopPos))
 
         self.__login_label = Label(self, bg="gray10",\
                                    fg="white", font=("Times New Roman", 12),\
@@ -397,6 +397,9 @@ class Authorization(Tk):
         self.__entr_button = Button(self, font=("Times New Roman", 12),\
                                     fg="gray1", text="Войти", width=15,\
                                     command=lambda: self.__MainWindow())
+
+        self.__entr_button.bind('<Return>', lambda x: self.__MainWindow())
+        self.__password_entry.bind('<Return>', lambda x: self.__MainWindow())
 
         self.__chkbtn=Checkbutton(self, activeforeground='White',\
                                   activebackground='gray10', bg="gray10",\
@@ -498,7 +501,7 @@ class Root(Tk):
         MyLeftPos = (self.winfo_screenwidth() - 1200) / 2
         myTopPos = (self.winfo_screenheight() - 600) / 2
 
-        self.geometry( "%dx%d+%d+%d" % (1200, 600, MyLeftPos, myTopPos))
+        self.geometry("%dx%d+%d+%d" % (1200, 600, MyLeftPos, myTopPos))
 
         Root.table = Table(self, headings=('Дата выполнения заявки', 'ФИО', 'Адрес',\
                                            'Телефон', 'Причина', 'Время выполнения',\
@@ -580,6 +583,19 @@ class Root(Tk):
                                fg="white", font=("Times New Roman", 12), text=__k_str)
         Root.isfull_label = Label(self, bg="gray10",\
                                   fg="white", font=("Times New Roman", 12))
+
+        self.__menu_visibility = True
+        self.bind("<Control-Key-o>", lambda x: self.__HideMenu(widg=\
+                 (self.__category_label, self.__FIO_label, self.__address_label,\
+                  self.__telephone_label, self.__reason_label, self.__information_label,\
+                  self.__for_master_label, self.__master_label, self.__record_value_label,\
+                  self.__data_label, self.FIO_entry, self.address_entry,\
+                  self.telephone_entry, self.reason_entry, self.information_entry,\
+                  self.for_master_entry, self.master_entry, self.__r1,\
+                  self.__r2, self.__cal, self.__monthchoosen,\
+                  self.__delete_button, self.__add_button, self.__srch_button,\
+                  self.__update_button, self.__clear_button)) if self.__menu_visibility is True else self.__ShowMenu())
+
         self.__tick()
 
         self.__r1 = Radiobutton(self, activeforeground='White',\
@@ -654,7 +670,8 @@ class Root(Tk):
         __m.add_command(label="О программе")
         __m.add_command(label="Выйти", command=self.destroy)
         try:
-            if Authorization.FIO_employee == 'Андрющенко Егор Валерьевич':
+            if Authorization.FIO_employee == 'Андрющенко Егор Валерьевич' or\
+               Authorization.FIO_employee == 'Соболь Владислав Николаевич':
                 __m.add_command(label="Администрирование", command=self.__RegWindow)
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
@@ -870,6 +887,7 @@ class Root(Tk):
            более видимой
         """
         try:
+            time.sleep(0.2)
             self.update_idletasks()
             [__i.place_forget() for __i in widg]
             Root.table.place(relwidth=0.98,\
@@ -879,8 +897,10 @@ class Root(Tk):
             Root.isfull_label.place(relwidth=0.15,\
                                     relheight=0.03, relx=0.43, rely=0.01)
             time.sleep(0.2)
+            self.__menu_visibility = False
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
+
 
     def __ShowMenu(self):
         """Show hidden menu
@@ -890,6 +910,7 @@ class Root(Tk):
            и возвращает таблицу с заявками
            на место
         """
+        time.sleep(0.2)
         self.update_idletasks()
         self.__category_label.place(relwidth=0.15,\
                                     relheight=0.03, relx=0.01, rely=0.05)
@@ -955,14 +976,16 @@ class Root(Tk):
         self.__curdate.place(relwidth=0.13,\
                              relheight=0.03, relx=0.38, rely=0.01)
         time.sleep(0.2)
+        self.__menu_visibility = True
         # if username is equal to administrator username
         # show administration panel
         # если имя пользователя соответствует имени админа
         # в меню добавляется панель администратора
         try:
-            if Authorization.FIO_employee == 'Андрющенко Егор Валерьевич':
-                self.__delete_button.place(relwidth=0.16,\
-                                           relheight=0.05, relx=0.10, rely=0.75)
+            if Authorization.FIO_employee == 'Андрющенко Егор Валерьевич' or\
+               Authorization.FIO_employee == 'Соболь Владислав Николаевич':
+                    self.__delete_button.place(relwidth=0.16,\
+                                               relheight=0.05, relx=0.10, rely=0.75)
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 

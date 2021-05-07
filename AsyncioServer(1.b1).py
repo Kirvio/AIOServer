@@ -14,6 +14,9 @@ class MyServer:
        with some db functionality,
        using Python 3.9.1
        writen in EAFP code style
+       Мой пример Асинхронного TCP сервера
+       с запросами в БД, используется python 3.9.1
+       в EAFP стиле
     """
     HEADER = 64
 
@@ -46,15 +49,13 @@ class MyServer:
             else:
                 msg_ = "NOLOG"
 
-        except (OSError, DatabaseError, IndexError, Exception):
+        except (OSError, IndexError, Exception, DatabaseError):
             self.log.error("Exception occurred", exc_info=True)
             raise
         else:
             return msg_
 
     async def register(self, db, SQLlist=tuple()):
-        """Register new User in our database with hashed password"""
-
         try:
             id_, login, password, fio = SQLlist[1], SQLlist[2], SQLlist[3], SQLlist[4]
 
@@ -66,7 +67,7 @@ class MyServer:
             await db.commit()
 
             self.log.info(f"Сотрудник {fio} зарегистрирован")
-        except (OSError, DatabaseError, IndexError, Exception):
+        except (OSError, IndexError, Exception, DatabaseError):
             self.log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -78,7 +79,7 @@ class MyServer:
             id_ = SQLlist[1]
             await db.execute("DELETE FROM Cipher WHERE ID = :ID", {'ID': id_})
             await db.commit()
-        except (OSError, DatabaseError, IndexError, Exception):
+        except (OSError, IndexError, Exception,  DatabaseError):
             self.log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -100,7 +101,7 @@ class MyServer:
                                            str(record[5]), str(record[6]), str(record[7]),\
                                            str(record[8]), str(record[9]), str(record[10]), str(record[11]),'#'))
 
-        except (OSError, DatabaseError, IndexError, Exception):
+        except (OSError, IndexError, Exception, DatabaseError):
             self.log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -118,7 +119,7 @@ class MyServer:
                 print_logins += '^'.join((str(record[0]), str(record[1]),\
                                           str(record[2]), str(record[3]), '#'))
 
-        except (OSError, DatabaseError, IndexError, Exception):
+        except (OSError, IndexError, Exception, DatabaseError):
             self.log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -146,7 +147,7 @@ class MyServer:
                                                str(record[6]), str(record[7]), str(record[8]), str(record[9]),\
                                                str(record[10]), str(record[11]),'#'))
 
-        except (OSError, DatabaseError, IndexError, Exception):
+        except (OSError, IndexError, Exception, DatabaseError):
             self.log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -181,7 +182,7 @@ class MyServer:
                                 'RecDate': recdate
                               })
             await db.commit()
-        except (OSError, DatabaseError, IndexError, Exception):
+        except (OSError, IndexError, Exception, DatabaseError):
             self.log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -196,7 +197,7 @@ class MyServer:
                                        WHERE address = :address AND\
                                        record_value = 'Закрыта'", {'address': address})
             await db.commit()
-        except (OSError, DatabaseError, IndexError, Exception):
+        except (OSError, IndexError, Exception, DatabaseError):
             self.log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -231,7 +232,7 @@ class MyServer:
                                 'RecDate': recdate
                               })
             await db.commit()
-        except (OSError, DatabaseError, IndexError, Exception):
+        except (OSError, IndexError, Exception, DatabaseError):
             self.log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -240,10 +241,11 @@ class MyServer:
             return msg
 
     async def access_db(self, SQLlist=tuple()):
-        """This funcions is used to connect
-           database and get required data
-           required data is defines
-           via keyword from client
+        """This coroutine is used for DB connection
+           required data is defines via keyword from client
+           Эта корутина предназначена для соединения с БД
+           запрашиваемые данные определяются с помощью
+           ключевого слова, которое посылает клиент
         """
 
         try:
@@ -256,13 +258,13 @@ class MyServer:
                 async with connect("address_book.db") as db:
                     if keyword == "ENTER":
                         enter_ = (await asyncio.shield(\
-                                      asyncio.wait_for(\
-                                                       self.enter(db, SQLlist), timeout=5.0)))
+                                        asyncio.wait_for(\
+                                                         self.enter(db, SQLlist), timeout=5.0)))
                         return enter_
                     elif keyword == "REGISTER":
                         register_ = (await asyncio.shield(\
-                                      asyncio.wait_for(\
-                                                      self.register(db, SQLlist), timeout=5.0)))
+                                           asyncio.wait_for(\
+                                                            self.register(db, SQLlist), timeout=5.0)))
                         return register_
                     elif keyword == "DELETEUSER":
                         delete_user_ = (await asyncio.shield(\
@@ -307,7 +309,10 @@ class MyServer:
                 raise
 
     async def accept_client(self, client_reader, client_writer):
-        """This function is used to accept client connection"""
+        """This coroutine is used to accept client connection
+           Эта корутина используется для обработки соединений
+           от TCP клиента
+        """
 
         # when hadle_client Task in done state, closing connection
         # and deleting connection from connections list
@@ -344,7 +349,7 @@ class MyServer:
                     try:
                         done_task = asyncio.create_task(client_done(handle_task))
                         done, pending = await asyncio.shield(\
-                                            asyncio.wait({done_task}))
+                                              asyncio.wait({done_task}))
                     except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
                         self.log.error("Exception occurred", exc_info=True)
                         done_task.cancel()
@@ -354,7 +359,9 @@ class MyServer:
                             done_task.cancel()
 
     async def handle_client(self, client_reader, client_writer):
-        """handles incoming TCP connection from client"""
+        """handles incoming TCP connection from client
+           обрабатывает запрос клиента
+        """
 
         while True:
             # client_reader waits to reads data till EOF '\n'
@@ -366,12 +373,13 @@ class MyServer:
                 if read_data_task in done:
                     try:
                         received_query = read_data_task.result()
+                        # this Task decrypts client message
                         decrypt_data_task = asyncio.create_task(\
                                                                 AsyncioBlockingIO().decrypt_message(received_query))
                         done, pending = await asyncio.shield(\
                                               asyncio.wait({decrypt_data_task}))
-                    except (asyncio.TimeoutError, asyncio.CancelledError,\
-                            Exception, OSError):
+                    except (Exception, OSError, RuntimeError,\
+                            asyncio.TimeoutError, asyncio.CancelledError):
                         self.log.error("Exception occurred", exc_info=True)
                         decrypt_data_task.cancel()
                         break
@@ -388,8 +396,8 @@ class MyServer:
                                 db_task = asyncio.create_task(self.access_db(SQLlist=message))
                                 done, pending = await asyncio.shield(\
                                                       asyncio.wait({db_task}))
-                            except (asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError,\
-                                    OSError, Exception, RuntimeError):
+                            except (OSError, Exception, RuntimeError,\
+                                    asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
                                 self.log.error("Exception occurred", exc_info=True)
                                 db_task.cancel()
                                 break
@@ -398,17 +406,19 @@ class MyServer:
                                 if db_task in done:
                                     try:
                                         data_from_db = db_task.result()
+                                        # wait untill writer is ready
                                         write_task = asyncio.create_task(\
                                                                          self.write_response(client_writer, data_from_db))
                                         done, pending = await asyncio.shield(\
                                                               asyncio.wait({write_task}))
-                                    except (asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError,\
-                                            OSError, Exception, RuntimeError):
+                                    except (OSError, Exception, RuntimeError,\
+                                            asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
                                         self.log.error("Exception occurred", exc_info=True)
                                         write_task.cancel()
                                         break
                                         raise
                                     finally:
+                                        # when write Task is done, .cancel all Tasks
                                         if write_task in done:
                                             try:
                                                 tasks = [read_data_task, decrypt_data_task, db_task, write_task]
@@ -416,8 +426,8 @@ class MyServer:
                                                 if cancel_:
                                                     print("Connection finished")
                                                     return
-                                            except (asyncio.TimeoutError, asyncio.InvalidStateError,\
-                                                    OSError, Exception, RuntimeError):
+                                            except (OSError, Exception, RuntimeError,\
+                                                    asyncio.TimeoutError, asyncio.InvalidStateError):
                                                 self.log.error("Exception occurred", exc_info=True)
                                                 break
                                                 raise
@@ -425,6 +435,8 @@ class MyServer:
     async def write_response(self, client_writer, data):
         """This function encrypting data from DB query
            and sends it to our client
+           Эта функция зашифровывает данные из БД
+           и отправляет их клиенту
         """
 
         # Encrypts a new message and calculate it's length to send
@@ -432,8 +444,8 @@ class MyServer:
             encrypt_task = asyncio.create_task(AsyncioBlockingIO().encrypt_message(data))
             done, pending = await asyncio.shield(\
                                   asyncio.wait({encrypt_task}))
-        except (asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError,\
-                OSError, Exception, RuntimeError):
+        except (OSError, Exception, RuntimeError,\
+                asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError,):
             self.log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -460,11 +472,15 @@ class MyServer:
                         encrypt_task.cancel()
 
     async def start(self):
-        """This function starts our async TCP server
+        """This coroutine starts our async TCP server
            in event loop, reader and writer is passed to
            coroutine accept_client, that responsible for
            creating 'client connections' tasks in our server
            that handles incoming connections
+           Эта корутина запускает наш асинхронный сервер
+           в петле событий, reader и writer передаются
+           корутине accept_client, которая ответственна
+           за создание задания на соединение между сервером и клиентом
         """
         self.server = await asyncio.start_server(self.accept_client,\
                                                  host='172.20.20.14', port=43333,\
