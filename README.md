@@ -1,9 +1,13 @@
 # AIOServer
 The purpose of this project is to better manage requests from clients to call the master
+
   as a server i'm using asyncio TCP server to handle connection from TCP client
   DB: aiosqlite
+  
   How to use:
+  
     make sure you use Python 3.9(python --version)
+    
     install all needed modules that this programm uses like:
       pip3 install aiosqlite
       pip3 install cryptography
@@ -18,4 +22,4 @@ The purpose of this project is to better manage requests from clients to call th
     create key for encryption/decryption with Fernet(Fernet.generate_key()) and put it into file
     write path to your key file in path variables(__key_path)
     and write your own host='172.20.20.14', port=43333 in AsyncioServer and Encrypt module
-    this is basically it, hf
+  this is basically it, hf
