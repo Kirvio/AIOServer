@@ -13,7 +13,7 @@ class MyServer:
     """My example of asyncio TCP server,
        with some db functionality,
        using Python 3.9.1
-       writen in EAFP code style
+       writen in EAFP and code style
        Мой пример Асинхронного TCP сервера
        с запросами в БД, используется python 3.9.1
        в EAFP стиле
@@ -61,9 +61,9 @@ class MyServer:
 
             new_hash = (await asyncio.wait_for(\
                                                AsyncioBlockingIO().to_hash_password(password), timeout=5.0))
-            cursor = await db.execute("INSERT INTO Cipher (ID, Login, Password, employee_FIO)\
-                                       VALUES (:ID, :Login, :Password, :employee_FIO)",
-                                       {'ID': id_, 'Login': login, 'Password': new_hash, 'employee_FIO': fio})
+            await db.execute("INSERT INTO Cipher (ID, Login, Password, employee_FIO)\
+                              VALUES (:ID, :Login, :Password, :employee_FIO)",
+                              {'ID': id_, 'Login': login, 'Password': new_hash, 'employee_FIO': fio})
             await db.commit()
 
             self.log.info(f"Сотрудник {fio} зарегистрирован")
@@ -193,9 +193,9 @@ class MyServer:
     async def delete(self, db, SQLlist=tuple()):
         try:
             address = SQLlist[1]
-            cursor = await db.execute("DELETE FROM records\
-                                       WHERE address = :address AND\
-                                       record_value = 'Закрыта'", {'address': address})
+            await db.execute("DELETE FROM records\
+                              WHERE address = :address AND\
+                              record_value = 'Закрыта'", {'address': address})
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
             self.log.error("Exception occurred", exc_info=True)
@@ -303,7 +303,8 @@ class MyServer:
                         return update_
                     else:
                         self.log.info("Поступил неправильный запрос")
-                        data = "Неправильный запрос"
+                        wrong_query = "Неправильный запрос"
+                        return wrong_query
             except (Exception, OSError, DatabaseError, RuntimeError):
                 self.log.error("Exception occured", exc_info=True)
                 raise
@@ -431,6 +432,8 @@ class MyServer:
                                                 self.log.error("Exception occurred", exc_info=True)
                                                 break
                                                 raise
+            else:
+                break
 
     async def write_response(self, client_writer, data):
         """This function encrypting data from DB query
@@ -445,7 +448,7 @@ class MyServer:
             done, pending = await asyncio.shield(\
                                   asyncio.wait({encrypt_task}))
         except (OSError, Exception, RuntimeError,\
-                asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError,):
+                asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
             self.log.error("Exception occurred", exc_info=True)
             raise
         else:

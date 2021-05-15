@@ -1,9 +1,8 @@
 __all__ = ()
 
 from cryptography.fernet import Fernet as FN
-from socket import AF_INET, socket, error, create_connection
+from socket import error, create_connection
 from tkinter import messagebox
-import time
 
 class Internet:
     """Class for TCP connection with server
@@ -11,7 +10,7 @@ class Internet:
        here is also used encryption with symmetric key
     """
 
-    __key_path='C:/PythonProgs/AIOServer/secret.key'
+    __key_path = 'C:/PythonProgs/AIOServer/secret.key'
 
     # Function, to create connection to
     # server with arguments, that defines the server
@@ -55,7 +54,7 @@ class Internet:
                 __f = FN(__key)
             __decrypted_message = __f.decrypt(message)
             __decoded_message = __decrypted_message.decode('utf8')
-        except (OSError, Exception) as err:
+        except (OSError, Exception) as __err:
             messagebox.showinfo('Ошибка', __err)
         else:
             return __decoded_message

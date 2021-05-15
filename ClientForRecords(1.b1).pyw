@@ -1,7 +1,7 @@
-from tkinter import Tk, messagebox, font, IntVar, Toplevel,\
+from tkinter import Tk, messagebox, IntVar, Toplevel,\
                     Checkbutton, ttk, Button, Entry, Label, StringVar,\
-                    Menu, W, E, END, Frame, Scrollbar, RIGHT, CENTER,\
-                    Y, X, YES, Radiobutton, BOTH, BOTTOM, TOP, FALSE
+                    Menu, END, Frame, Scrollbar, RIGHT, CENTER,\
+                    Y, X, YES, Radiobutton, BOTH, BOTTOM
 from tkinter.filedialog import askopenfile
 from tkcalendar import DateEntry
 from xlsxwriter.workbook import Workbook
@@ -328,14 +328,14 @@ class Registration(Toplevel):
             check_ = [x for x in reg_tuple if x == ""]
             if check_:
                 messagebox.showinfo("Ошибка:", "Заполните все поля")
-        except Exception as exc:
+        except Exception:
             raise
         else:
             try:
                 __ToAuth = "^".join(("REGISTER",\
                                                 reg_tuple[0], reg_tuple[1], reg_tuple[2], reg_tuple[3]))
                 __msg = Internet().IntoNetwork(data=__ToAuth)
-            except Exception as exc:
+            except Exception:
                 raise
             else:
                     if __msg == "Reg":
@@ -352,7 +352,7 @@ class Registration(Toplevel):
             else:
                 __ToDel = "^".join(("DELETEUSER", id_))
                 __msg = Internet().IntoNetwork(data=__ToDel)
-        except Exception as exc:
+        except Exception:
             raise
         else:
             if __msg == "OK":
@@ -362,16 +362,16 @@ class Registration(Toplevel):
             else:
                 pass
 
-class Authorization(Tk):
+class Authentication(Tk):
 
     def __init__(self):
         super().__init__()
 
         self.protocol("WM_DELETE_WINDOW", self.__close)
 
-        Authorization.__Login, Authorization.__Password,\
-        Authorization.FIO_employee = StringVar(), StringVar(), StringVar()
-        Authorization.__ent, Authorization.__pas = IntVar(), IntVar()
+        Authentication.__Login, Authentication.__Password,\
+        Authentication.FIO_employee = StringVar(), StringVar(), StringVar()
+        Authentication.__ent = IntVar()
 
         self.title("Авторизация:")
 
@@ -389,10 +389,10 @@ class Authorization(Tk):
 
         self.__login_entry = Entry(self,\
                                    font=("Times New Roman", 12), fg='gray1',\
-                                   textvariable=Authorization.__Login, width=40)
+                                   textvariable=Authentication.__Login, width=40)
         self.__password_entry = Entry(self,\
                                       font=("Times New Roman", 12), fg='gray1',\
-                                      textvariable=Authorization.__Password, width=40, show="*")
+                                      textvariable=Authentication.__Password, width=40, show="*")
 
         self.__entr_button = Button(self, font=("Times New Roman", 12),\
                                     fg="gray1", text="Войти", width=15,\
@@ -405,7 +405,7 @@ class Authorization(Tk):
                                   activebackground='gray10', bg="gray10",\
                                   font=("Times New Roman", 12), fg='White',\
                                   text="Показать пароль", selectcolor='gray10',\
-                                  variable=Authorization.__ent, onvalue=1, offvalue=0,\
+                                  variable=Authentication.__ent, onvalue=1, offvalue=0,\
                                   command=lambda: self.__ShowPas())
 
         self.__entr_button.place(relwidth=0.30,\
@@ -433,7 +433,7 @@ class Authorization(Tk):
 
     def __ShowPas(self):
         try:
-            if Authorization.__ent.get():
+            if Authentication.__ent.get():
                 self.__password_entry.config(show="")
             else:
                 self.__password_entry.config(show="*")
@@ -441,15 +441,15 @@ class Authorization(Tk):
             messagebox.showinfo("Ошибка:", exc)
 
     def __MainWindow(self):
-        """If authorization is complete
-           destroys Authorization window
+        """If Authentication is complete
+           destroys Authentication window
            and calls Root
            Если авторизация прошла успешно
            вызывает self.destroy() и запускает
            главное окно
         """
         try:
-            __TupleAuth = (Authorization.__Login.get(), Authorization.__Password.get())
+            __TupleAuth = (Authentication.__Login.get(), Authentication.__Password.get())
             __kek = [__x for __x in __TupleAuth if __x == '' or len(__x) > 30]
             if __kek:
                 messagebox.showinfo("Ошибка", "Поля заполнены некорректно")
@@ -466,7 +466,7 @@ class Authorization(Tk):
                     if __msg:
                         __msg = __msg.split("^")
                         if __msg[0] == "GO":
-                            Authorization.FIO_employee = __msg[1]
+                            Authentication.FIO_employee = __msg[1]
                             self.destroy()
                             time.sleep(0.5)
                             Functions().MainFN()
@@ -496,7 +496,7 @@ class Root(Tk):
                                                  StringVar(), StringVar(), StringVar(), StringVar(), StringVar(), StringVar()
         Root.r_var.set('Открыта')
 
-        self.title(Authorization.FIO_employee)
+        self.title(Authentication.FIO_employee)
 
         MyLeftPos = (self.winfo_screenwidth() - 1200) / 2
         myTopPos = (self.winfo_screenheight() - 600) / 2
@@ -594,7 +594,7 @@ class Root(Tk):
                   self.for_master_entry, self.master_entry, self.__r1,\
                   self.__r2, self.__cal, self.__monthchoosen,\
                   self.__delete_button, self.__add_button, self.__srch_button,\
-                  self.__update_button, self.__clear_button)) if self.__menu_visibility is True else self.__ShowMenu())
+                  self.__update_button, self.__clear_button)) if self.__menu_visibility else self.__ShowMenu())
 
         self.__tick()
 
@@ -668,10 +668,11 @@ class Root(Tk):
         __m_table.add_command(label="Добавить запись",\
                               command=self.Insert_into)
         __m.add_command(label="О программе")
-        __m.add_command(label="Выйти", command=self.destroy)
+        __m.add_command(label="Выйти", command=self.__confirm_exit)
         try:
-            if Authorization.FIO_employee == 'Андрющенко Егор Валерьевич' or\
-               Authorization.FIO_employee == 'Соболь Владислав Николаевич':
+            if Authentication.FIO_employee == 'Андрющенко Егор Валерьевич' or\
+               Authentication.FIO_employee == 'Соболь Владислав Николаевич' or\
+               Authentication.FIO_employee == 'Кравцов Виктор Сергеевич':
                 __m.add_command(label="Администрирование", command=self.__RegWindow)
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
@@ -709,7 +710,7 @@ class Root(Tk):
             __variables = (Root.FIO.get(), Root.address.get(), Root.telephone.get(),\
                            Root.reason.get(), Root.information.get(),\
                            Root.for_master.get(), Root.master.get(), Root.r_var.get(),\
-                           Root.Category.get(), Authorization.FIO_employee, __d_string, Root.Date.get())
+                           Root.Category.get(), Authentication.FIO_employee, __d_string, Root.Date.get())
             __pattern = r'[A-Za-z]'
             __kek = [__z for __z in __variables if __z == ''\
                      or len(__z) > 100 or re.findall(__pattern, __z)]
@@ -982,20 +983,21 @@ class Root(Tk):
         # если имя пользователя соответствует имени админа
         # в меню добавляется панель администратора
         try:
-            if Authorization.FIO_employee == 'Андрющенко Егор Валерьевич' or\
-               Authorization.FIO_employee == 'Соболь Владислав Николаевич':
+            if Authentication.FIO_employee == 'Андрющенко Егор Валерьевич' or\
+               Authentication.FIO_employee == 'Соболь Владислав Николаевич' or\
+               Authentication.FIO_employee == 'Кравцов Виктор Сергеевич':
                     self.__delete_button.place(relwidth=0.16,\
                                                relheight=0.05, relx=0.10, rely=0.75)
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 
 if __name__ == '__main__':
-    # Run Authorization window 
+    # Run Authentication window 
     # when programm starts running
     # Запускаем окно авторизации
     # когда программа запускается
     try:
-        App = Authorization()
+        App = Authentication()
         App.mainloop()
     except Exception:
         raise
