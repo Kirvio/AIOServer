@@ -149,7 +149,7 @@ class Table(Frame):
                                                          (__RT.reason_entry,str(__data[4])), (__RT.information_entry,str(__data[5])),\
                                                          (__RT.for_master_entry,str(__data[6])), (__RT.master_entry,str(__data[7]))))
                     __RT.r_var.set(str(__data[8])), __RT.Category.set(str(__data[9])),\
-                    __RT.Date.set(str(__data[0]))
+                    __RT.Date.set(str(__data[0])), __RT.RegDate.set(str(__data[11]))
                 else:
                     messagebox.showinfo("Внимание", "Выберите строку в таблице")
             except (Exception, IndexError,\
@@ -234,13 +234,14 @@ class Table(Frame):
         except TypeError as err:
             messagebox.showinfo("Error", err)
 
-    def DeleteQuery(self, adr):
+    def DeleteQuery(self, adr, regdate):
         """Deleting record by address
            Удаляет заявку по адрессу
         """
         try:
             [self.__tree.delete(__child) for __child in self.__tree.get_children()\
-             if adr in self.__tree.item(__child)['values']]
+             if adr in self.__tree.item(__child)['values'] and\
+                regdate in self.__tree.item(__child)['values']]
         except TypeError as err:
             messagebox.showinfo("Error", err)
 
@@ -338,11 +339,11 @@ class Registration(Toplevel):
             except Exception:
                 raise
             else:
-                    if __msg == "Reg":
-                        add_user = [[reg_tuple[0], reg_tuple[1], reg_tuple[2], reg_tuple[3]]]
-                        Registration.table.AddQuery(entry=add_user)
-                    else:
-                        pass
+                if __msg == "Reg":
+                    add_user = [[reg_tuple[0], reg_tuple[1], reg_tuple[2], reg_tuple[3]]]
+                    Registration.table.AddQuery(entry=add_user)
+                else:
+                    pass
 
     def __DeleteUser(self):
         try:
@@ -491,9 +492,10 @@ class Root(Tk):
 
         Root.Date, Root.FIO, Root.address, Root.telephone,\
         Root.reason, Root.information, Root.for_master,\
-        Root.master, Root.r_var, Root.Category =\
-                                                 StringVar(), StringVar(), StringVar(), StringVar(),\
-                                                 StringVar(), StringVar(), StringVar(), StringVar(), StringVar(), StringVar()
+        Root.master, Root.r_var, Root.Category, Root.RegDate =\
+                                                              StringVar(), StringVar(), StringVar(), StringVar(),\
+                                                              StringVar(), StringVar(), StringVar(), StringVar(),\
+                                                              StringVar(), StringVar(), StringVar()
         Root.r_var.set('Открыта')
 
         self.title(Authentication.FIO_employee)
@@ -585,16 +587,17 @@ class Root(Tk):
                                   fg="white", font=("Times New Roman", 12))
 
         self.__menu_visibility = True
-        self.bind("<Control-Key-o>", lambda x: self.__HideMenu(widg=\
-                 (self.__category_label, self.__FIO_label, self.__address_label,\
-                  self.__telephone_label, self.__reason_label, self.__information_label,\
-                  self.__for_master_label, self.__master_label, self.__record_value_label,\
-                  self.__data_label, self.FIO_entry, self.address_entry,\
-                  self.telephone_entry, self.reason_entry, self.information_entry,\
-                  self.for_master_entry, self.master_entry, self.__r1,\
-                  self.__r2, self.__cal, self.__monthchoosen,\
-                  self.__delete_button, self.__add_button, self.__srch_button,\
-                  self.__update_button, self.__clear_button)) if self.__menu_visibility else self.__ShowMenu())
+        self.bind("<Control-Key-o>",\
+                                    lambda x: self.__HideMenu(widg=(self.__category_label, self.__FIO_label,\
+                                                                    self.__address_label, self.__telephone_label,\
+                                                                    self.__reason_label, self.__information_label,\
+                                                                    self.__for_master_label, self.__master_label, self.__record_value_label,\
+                                                                    self.__data_label, self.FIO_entry, self.address_entry,\
+                                                                    self.telephone_entry, self.reason_entry, self.information_entry,\
+                                                                    self.for_master_entry, self.master_entry, self.__r1,\
+                                                                    self.__r2, self.__cal, self.__monthchoosen,\
+                                                                    self.__delete_button, self.__add_button, self.__srch_button,\
+                                                                    self.__update_button, self.__clear_button)) if self.__menu_visibility else self.__ShowMenu())
 
         self.__tick()
 
@@ -603,6 +606,7 @@ class Root(Tk):
                                 font=("Times New Roman", 12), fg='White',\
                                 text='Открыта', selectcolor='gray10',\
                                 variable=self.r_var, value='Открыта')
+
         self.__r2 = Radiobutton(self, activeforeground='White',\
                                 activebackground='gray10', bg="gray10",\
                                 font=("Times New Roman", 12), fg='White',\
@@ -611,7 +615,7 @@ class Root(Tk):
 
         self.__delete_button = Button(self, font=("Times New Roman", 12),\
                                       fg="gray1", text="Удалить Запись",\
-                                      width=15, command=self.Delete_by_address)
+                                      width=15, command=self.Delete_record)
 
         self.__add_button = Button(self, font=("Times New Roman", 12),\
                                    fg="gray1", text="Добавить Запись",\
@@ -627,15 +631,18 @@ class Root(Tk):
 
         self.__clear_button = Button(self, font=("Times New Roman", 12),\
                                      fg="gray1", text="Очистить Поля Ввода", width=15,\
-                                     command=lambda: Functions().InsertInEntryes(entryes=(self.FIO_entry,\
-                                     self.address_entry, self.telephone_entry, self.reason_entry,\
-                                     self.information_entry, self.for_master_entry, self.master_entry), dell=1))
+                                     command=lambda: Functions().InsertInEntryes(entryes=(\
+                                                                                          self.FIO_entry, self.address_entry,\
+                                                                                          self.telephone_entry, self.reason_entry,\
+                                                                                          self.information_entry, self.for_master_entry,\
+                                                                                          self.master_entry), dell=1))
 
         __m = Menu(self)
         __m_edit = Menu(__m, font=("Times New Roman", 11), tearoff=0)
         __m.add_cascade(menu=__m_edit, label="Меню")
         __m_edit.add_command(label="Скрыть меню",\
-                             command=lambda: self.__HideMenu(widg=(self.__category_label, self.__FIO_label, self.__address_label,\
+                             command=lambda: self.__HideMenu(widg=(\
+                                                                   self.__category_label, self.__FIO_label, self.__address_label,\
                                                                    self.__telephone_label, self.__reason_label, self.__information_label,\
                                                                    self.__for_master_label, self.__master_label, self.__record_value_label,\
                                                                    self.__data_label, self.FIO_entry, self.address_entry,\
@@ -747,7 +754,7 @@ class Root(Tk):
             if ID == 1:
                 __CAT = Root.Category.get()
                 if __CAT == '' or re.findall(__pattern, __CAT):
-                    messagebox.showinfo("Ошибка", "Введите категорию корректно!")
+                    messagebox.showinfo("Ошибка", "Заполните поле категории корректно!")
                 else:
                     Root.table.SearchQuery(trigger=__CAT)
             elif ID == 2:
@@ -765,7 +772,7 @@ class Root(Tk):
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 
-    def Delete_by_address(self):
+    def Delete_record(self):
         """Sending address of the client
            with keyword DELETE, wich triggers
            DELETE query in DB on our server
@@ -776,26 +783,30 @@ class Root(Tk):
            вызывает запрос удалить
            в нашей БД на сервере
         """
-        try:
-            __pattern = r'[A-Za-z]'
-            __DADR = Root.address.get()
-        except (Exception, UnboundLocalError) as exc:
-            messagebox.showinfo("Ошибка:", exc)
-        else:
+        def Connect(adr, date):
+            __request = "^".join(("DELETE", adr, date))
+            __ReceivedData = Internet().IntoNetwork(data=__request)
+            messagebox.showinfo("Data:", __ReceivedData)
+            Root.table.DeleteQuery(adr=adr, regdate=date)
+        message = "Вы уверены, что хотите удалить заявку?"
+        if messagebox.askyesno(message=message, parent=self):
             try:
-                if __DADR == '' or re.findall(__pattern, __DADR):
-                    messagebox.showinfo("Ошибка", "Заполните адресс корректно")
-                elif Root.r_var.get() == "Открыта":
-                    messagebox.showinfo("Ошибка", "Заявка в открытом состоянии\
-                                        \nЗакройте заявку перед тем как удалить")
-            except Exception as exc:
+                __pattern = r'[A-Za-z]'
+                __DADR, __RegDate = Root.address.get(), Root.RegDate.get()
+            except (Exception, UnboundLocalError) as exc:
                 messagebox.showinfo("Ошибка:", exc)
             else:
                 try:
-                    __request = "^".join(("DELETE", __DADR))
-                    __ReceivedData = Internet().IntoNetwork(data=__request)
-                    messagebox.showinfo("Data:", __ReceivedData)
-                    Root.table.DeleteQuery(adr=__DADR)
+                    if __DADR == '' or re.findall(__pattern, __DADR):
+                        messagebox.showinfo("Ошибка", "Заполните адресс корректно")
+                    elif Root.r_var.get() == "Открыта":
+                        message = "Заявка в открытом состоянии,\
+                                   вы уверены что хотите удалить заявку?"
+                        result = messagebox.askyesno(message=message, parent=self)
+                        if result:
+                                Connect(__DADR, __RegDate)
+                    else:
+                        Connect(__DADR, __RegDate)
                 except Exception as exc:
                     messagebox.showinfo("Ошибка:", exc)
 
@@ -822,7 +833,7 @@ class Root(Tk):
                      if __z == '' or len(__z) > 100 or re.findall(__pattern, __z)]
         except (TypeError, Exception, UnboundLocalError) as exc:
             messagebox.showinfo("Ошибка:", exc)
-        finally:
+        else:
             try:
                 if __kek:
                     messagebox.showinfo("Ошибка", "Ошибка в тексте!")

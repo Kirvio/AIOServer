@@ -17,8 +17,8 @@ class Internet:
     def IntoNetwork(self, data, host='172.20.20.14', port=43333):
         try:
             # socket.create_connection returns link to socket object
-            self._sock = create_connection((host, port))
-            __rst = self.ToConnect(data)
+            with create_connection((host, port)) as self._sock:
+                __rst = self.ToConnect(data)
         except error as __err:
             messagebox.showinfo('Ошибка', __err)
         else:

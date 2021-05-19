@@ -7,8 +7,8 @@ import asyncio
 class AsyncioBlockingIO:
     """Class, that contents operations with blocking I/O(CPU bound).
 
-       To prevent blocking in event loop, 
-       use asyncify decorator, 
+       To prevent blocking in event loop,
+       use asyncify decorator,
        that runs CPU bound function in executor
        В этом классе содержатся операции блокирующие
        I/O(CPU bound), что-бы не допустить блока
@@ -20,9 +20,9 @@ class AsyncioBlockingIO:
     # Path to key for encryption and decryption
     key_path = 'C:/PythonProgs/AIOServer/secret.key'
 
-    # Asyncio decorator that returns Future 
-    # while running task in background thread 
-    # (good for cpu bound functions that release the GIL such as `bcrypt.checkpw`) 
+    # Asyncio decorator that returns Future
+    # while running task in background thread
+    # (good for cpu bound functions that release the GIL such as `bcrypt.checkpw`)
     def asyncify(func):
         async def inner(*args, **kwargs):
             loop = asyncio.get_running_loop()
@@ -38,7 +38,7 @@ class AsyncioBlockingIO:
                 f = FN(key)
             decrypted_message = f.decrypt(message)
             decoded_message = decrypted_message.decode('utf8')
-        except (OSError, Exception) as err:
+        except (OSError, Exception):
             raise
         else:
             return decoded_message
@@ -51,11 +51,10 @@ class AsyncioBlockingIO:
                 f = FN(key)
             encoded_message = str(message).encode('utf8')
             encrypted_message = f.encrypt(encoded_message)
-        except (OSError, Exception) as err:
+        except (OSError, Exception):
             raise
         else:
             return encrypted_message
-
 
     @asyncify
     def check_pass(self, password, hashed_pass):

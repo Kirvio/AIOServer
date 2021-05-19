@@ -192,10 +192,10 @@ class MyServer:
 
     async def delete(self, db, SQLlist=tuple()):
         try:
-            address = SQLlist[1]
+            address, RegDate = SQLlist[1], SQLlist[2]
             await db.execute("DELETE FROM records\
                               WHERE address = :address AND\
-                              record_value = 'Закрыта'", {'address': address})
+                              RegDate = :RegDate", {'address': address, 'RegDate': RegDate})
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
             self.log.error("Exception occurred", exc_info=True)
@@ -383,7 +383,6 @@ class MyServer:
                             asyncio.TimeoutError, asyncio.CancelledError):
                         self.log.error("Exception occurred", exc_info=True)
                         decrypt_data_task.cancel()
-                        break
                         raise
                     else:
                         if decrypt_data_task in done:
@@ -401,7 +400,6 @@ class MyServer:
                                     asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
                                 self.log.error("Exception occurred", exc_info=True)
                                 db_task.cancel()
-                                break
                                 raise
                             else:
                                 if db_task in done:
@@ -416,7 +414,6 @@ class MyServer:
                                             asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
                                         self.log.error("Exception occurred", exc_info=True)
                                         write_task.cancel()
-                                        break
                                         raise
                                     finally:
                                         # when write Task is done, .cancel all Tasks
@@ -430,7 +427,6 @@ class MyServer:
                                             except (OSError, Exception, RuntimeError,\
                                                     asyncio.TimeoutError, asyncio.InvalidStateError):
                                                 self.log.error("Exception occurred", exc_info=True)
-                                                break
                                                 raise
             else:
                 break
