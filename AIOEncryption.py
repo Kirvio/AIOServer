@@ -2,14 +2,16 @@ __all__ = ()
 
 from bcrypt import checkpw, hashpw, gensalt
 from cryptography.fernet import Fernet as FN
+from functools import lru_cache
 import asyncio
 
+@lru_cache(typed=True)
 class AsyncioBlockingIO:
     """Class, that contents operations with blocking I/O(CPU bound).
 
        To prevent blocking in event loop,
        use asyncify decorator,
-       that runs CPU bound function in executor
+       that runs CPU bound functions in executor
        В этом классе содержатся операции блокирующие
        I/O(CPU bound), что-бы не допустить блока
        используется декоратор asyncify

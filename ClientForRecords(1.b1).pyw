@@ -5,10 +5,11 @@ from tkinter import Tk, messagebox, IntVar, Toplevel,\
 from tkinter.filedialog import askopenfile
 from tkcalendar import DateEntry
 from xlsxwriter.workbook import Workbook
+from datetime import datetime
+from functools import cache, lru_cache
 import os
 import time
 import re
-from datetime import datetime
 try:
     from Encrypt import Internet
 except ImportError:
@@ -17,6 +18,7 @@ except ImportError:
 class Functions:
     """Main functions"""
 
+    @cache
     def InsertInEntryes(self, entryes=tuple(), dell=int()):
         """Insenrting values in entryes
            if some values already there
@@ -33,6 +35,7 @@ class Functions:
         except TypeError as err:
             messagebox.showinfo("Ошибка", err)
 
+    @cache
     def Sort(self, ReceivedData=tuple()):
         """Sorting incoming messages
            Сортирует входящие сообщения
@@ -129,6 +132,7 @@ class Table(Frame):
         except (TypeError, AttributeError) as err:
             messagebox.showinfo("Ошибка", err)
 
+    @lru_cache(typed=True)
     def __OnEvents(self, rt):
         """Insert data from line in the table
            into entryes for correction
@@ -912,7 +916,6 @@ class Root(Tk):
             self.__menu_visibility = False
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
-
 
     def __ShowMenu(self):
         """Show hidden menu
