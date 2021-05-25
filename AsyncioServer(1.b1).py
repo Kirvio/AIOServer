@@ -23,7 +23,7 @@ class MyServer:
     def __init__(self):
 
         # Enables logs inside class
-        self.log = logging.getLogger(__name__)
+        # log = logging.getLogger(__name__)
 
         # this keep tracking all client tasks inside
         self.clients = {}
@@ -41,16 +41,16 @@ class MyServer:
                     cursor_ = await db.execute("SELECT employee_FIO FROM Cipher WHERE Login = :Login",
                                                {'Login': Log})
                     msg_ = await cursor_.fetchone()
-                    self.log.info(f"Сотрудник {Log} авторизировался")
+                    log.info(f"Сотрудник {Log} авторизировался")
                     msg_ = "^".join(["GO", msg_[0]])
                 else:
-                    self.log.info("Попытка входа с неправильным паролем")
+                    log.info("Попытка входа с неправильным паролем")
                     msg_ = "Fail"
             else:
                 msg_ = "NOLOG"
 
         except (OSError, IndexError, Exception, DatabaseError):
-            self.log.error("Exception occurred", exc_info=True)
+            log.error("Exception occurred", exc_info=True)
             raise
         else:
             return msg_
@@ -66,9 +66,9 @@ class MyServer:
                               {'ID': id_, 'Login': login, 'Password': new_hash, 'employee_FIO': fio})
             await db.commit()
 
-            self.log.info(f"Сотрудник {fio} зарегистрирован")
+            log.info(f"Сотрудник {fio} зарегистрирован")
         except (OSError, IndexError, Exception, DatabaseError):
-            self.log.error("Exception occurred", exc_info=True)
+            log.error("Exception occurred", exc_info=True)
             raise
         else:
             msg = 'Reg'
@@ -80,10 +80,10 @@ class MyServer:
             await db.execute("DELETE FROM Cipher WHERE ID = :ID", {'ID': id_})
             await db.commit()
         except (OSError, IndexError, Exception,  DatabaseError):
-            self.log.error("Exception occurred", exc_info=True)
+            log.error("Exception occurred", exc_info=True)
             raise
         else:
-            self.log.info(f"Сотрудник {id_} удален из БД")
+            log.info(f"Сотрудник {id_} удален из БД")
             msg = "OK"
             return msg
 
@@ -102,10 +102,10 @@ class MyServer:
                                            str(record[8]), str(record[9]), str(record[10]), str(record[11]),'#'))
 
         except (OSError, IndexError, Exception, DatabaseError):
-            self.log.error("Exception occurred", exc_info=True)
+            log.error("Exception occurred", exc_info=True)
             raise
         else:
-            self.log.info("Запрос на все заявки")
+            log.info("Запрос на все заявки")
             return print_records
 
     async def userquery(self, db):
@@ -120,10 +120,10 @@ class MyServer:
                                           str(record[2]), str(record[3]), '#'))
 
         except (OSError, IndexError, Exception, DatabaseError):
-            self.log.error("Exception occurred", exc_info=True)
+            log.error("Exception occurred", exc_info=True)
             raise
         else:
-            self.log.info("Запрос на информацию о сотрудниках")
+            log.info("Запрос на информацию о сотрудниках")
             return print_logins
 
     async def curquery(self, db, SQLlist=tuple()):
@@ -140,7 +140,7 @@ class MyServer:
                 print("На текущий день ничего нет")
                 print_records = 'No'
             else:
-                self.log.info("Запрос на текущие заявки")
+                log.info("Запрос на текущие заявки")
                 for record in records:
                     print_records += '^'.join((str(record[0]), str(record[1]),\
                                                str(record[2]), str(record[3]), str(record[4]), str(record[5]),\
@@ -148,7 +148,7 @@ class MyServer:
                                                str(record[10]), str(record[11]),'#'))
 
         except (OSError, IndexError, Exception, DatabaseError):
-            self.log.error("Exception occurred", exc_info=True)
+            log.error("Exception occurred", exc_info=True)
             raise
         else:
             return print_records
@@ -183,10 +183,10 @@ class MyServer:
                               })
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
-            self.log.error("Exception occurred", exc_info=True)
+            log.error("Exception occurred", exc_info=True)
             raise
         else:
-            self.log.info(f"Новая заявка добавлена в БД")
+            log.info(f"Новая заявка добавлена в БД")
             msg = "Новая запись добавлена"
             return msg
 
@@ -198,10 +198,10 @@ class MyServer:
                               RegDate = :RegDate", {'address': address, 'RegDate': RegDate})
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
-            self.log.error("Exception occurred", exc_info=True)
+            log.error("Exception occurred", exc_info=True)
             raise
         else:
-            self.log.info("Запрос на удаление заявки выполнен")
+            log.info("Запрос на удаление заявки выполнен")
             msg = 'Запись удалена'
             return msg
 
@@ -233,10 +233,10 @@ class MyServer:
                               })
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
-            self.log.error("Exception occurred", exc_info=True)
+            log.error("Exception occurred", exc_info=True)
             raise
         else:
-            self.log.info("Запрос на обновление заявки выполнен")
+            log.info("Запрос на обновление заявки выполнен")
             msg = "Запись обновлена"
             return msg
 
@@ -251,7 +251,7 @@ class MyServer:
         try:
             keyword = SQLlist[0]
         except IndexError:
-            self.log.error("Exception occurred", exc_info=True)
+            log.error("Exception occurred", exc_info=True)
             raise
         else:
             try:
@@ -302,11 +302,11 @@ class MyServer:
                                                           self.update(db, SQLlist), timeout=5.0)))
                         return update_
                     else:
-                        self.log.info("Поступил неправильный запрос")
+                        log.info("Поступил неправильный запрос")
                         wrong_query = "Неправильный запрос"
                         return wrong_query
             except (Exception, OSError, DatabaseError, RuntimeError):
-                self.log.error("Exception occured", exc_info=True)
+                log.error("Exception occured", exc_info=True)
                 raise
 
     async def accept_client(self, client_reader, client_writer):
@@ -325,7 +325,7 @@ class MyServer:
                 await client_writer.wait_closed()
             except (OSError, ConnectionError, RuntimeError,\
                     asyncio.CancelledError, asyncio.InvalidStateError, asyncio.TimeoutError):
-                self.log.error("Exception occurred", exc_info=True)
+                log.error("Exception occurred", exc_info=True)
                 raise
 
         # start a new Task to handle this specific client connection
@@ -333,7 +333,7 @@ class MyServer:
             handle_task = asyncio.create_task(\
                                               self.handle_client(client_reader, client_writer))
         except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
-            self.log.error("Exception occurred", exc_info=True)
+            log.error("Exception occurred", exc_info=True)
             raise
         else:
             try:
@@ -341,7 +341,7 @@ class MyServer:
                 done, pending = await asyncio.shield(\
                                       asyncio.wait({handle_task}))
             except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
-                self.log.error("Exception occurred", exc_info=True)
+                log.error("Exception occurred", exc_info=True)
                 handle_task.cancel()
                 raise
             else:
@@ -352,7 +352,7 @@ class MyServer:
                         done, pending = await asyncio.shield(\
                                               asyncio.wait({done_task}))
                     except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
-                        self.log.error("Exception occurred", exc_info=True)
+                        log.error("Exception occurred", exc_info=True)
                         done_task.cancel()
                         raise
                     else:
@@ -381,7 +381,7 @@ class MyServer:
                                               asyncio.wait({decrypt_data_task}))
                     except (Exception, OSError, RuntimeError,\
                             asyncio.TimeoutError, asyncio.CancelledError):
-                        self.log.error("Exception occurred", exc_info=True)
+                        log.error("Exception occurred", exc_info=True)
                         decrypt_data_task.cancel()
                         raise
                     else:
@@ -391,14 +391,14 @@ class MyServer:
                                 message = decrypted_data.split("^")
                                 addr = client_writer.get_extra_info('peername')
                                 print(f"Connected to {addr!r}")
-                                self.log.info(f"Connected to {addr!r}")
+                                log.info(f"Connected to {addr!r}")
 
                                 db_task = asyncio.create_task(self.access_db(SQLlist=message))
                                 done, pending = await asyncio.shield(\
                                                       asyncio.wait({db_task}))
                             except (OSError, Exception, RuntimeError,\
                                     asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
-                                self.log.error("Exception occurred", exc_info=True)
+                                log.error("Exception occurred", exc_info=True)
                                 db_task.cancel()
                                 raise
                             else:
@@ -412,7 +412,7 @@ class MyServer:
                                                               asyncio.wait({write_task}))
                                     except (OSError, Exception, RuntimeError,\
                                             asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
-                                        self.log.error("Exception occurred", exc_info=True)
+                                        log.error("Exception occurred", exc_info=True)
                                         write_task.cancel()
                                         raise
                                     finally:
@@ -426,7 +426,7 @@ class MyServer:
                                                     return
                                             except (OSError, Exception, RuntimeError,\
                                                     asyncio.TimeoutError, asyncio.InvalidStateError):
-                                                self.log.error("Exception occurred", exc_info=True)
+                                                log.error("Exception occurred", exc_info=True)
                                                 raise
             else:
                 break
@@ -445,7 +445,7 @@ class MyServer:
                                   asyncio.wait({encrypt_task}))
         except (OSError, Exception, RuntimeError,\
                 asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
-            self.log.error("Exception occurred", exc_info=True)
+            log.error("Exception occurred", exc_info=True)
             raise
         else:
             if encrypt_task in done:
@@ -455,7 +455,7 @@ class MyServer:
                     send_length = str(query_length).encode('utf8')
                     send_length += b' ' * (self.HEADER - len(send_length))
                 except Exception:
-                    self.log.error("Exception occurred", exc_info=True)
+                    log.error("Exception occurred", exc_info=True)
                     raise
                 else:
                     try:
@@ -463,7 +463,7 @@ class MyServer:
                         client_writer.write(query)
                     except (Exception, OSError, ConnectionError, RuntimeError,\
                             asyncio.CancelledError, asyncio.InvalidStateError, asyncio.TimeoutError):
-                        self.log.error("Exception occured", exc_info=True)
+                        log.error("Exception occured", exc_info=True)
                         raise
                     else:
                         await client_writer.drain()
