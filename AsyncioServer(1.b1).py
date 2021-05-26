@@ -3,7 +3,6 @@ import sys
 import socket
 import logging
 try:
-    import aiolog
     from aiosqlite import connect, DatabaseError
     from AIOEncryption import AsyncioBlockingIO
 except ImportError:
@@ -495,8 +494,7 @@ class MyServer:
 
 if __name__ == "__main__":
     Server = MyServer()
-    aiolog.start()
-    log = logging.getLogger('')
+    log = logging.getLogger('asyncio')
     f_format = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     log.setLevel(logging.INFO)
     f_handler = logging.FileHandler('ServerLog.log')
