@@ -2,8 +2,8 @@ import asyncio
 import sys
 import socket
 import logging
+from itertools import chain, product
 try:
-    import aiolog
     from aiosqlite import connect, DatabaseError
     from AIOEncryption import AsyncioBlockingIO
 except ImportError:
@@ -28,7 +28,7 @@ class MyServer:
         # this keep tracking all client tasks inside
         self.clients = {}
 
-    async def enter(self, db, SQLlist=tuple()):
+    async def enter(self, db, SQLlist):
         try:
             Log, Passs = SQLlist[1], SQLlist[2]
             cursor = await db.execute("SELECT Password FROM Cipher WHERE Login = :Login",
@@ -55,7 +55,7 @@ class MyServer:
         else:
             return msg_
 
-    async def register(self, db, SQLlist=tuple()):
+    async def register(self, db, SQLlist):
         try:
             id_, login, password, fio = SQLlist[1], SQLlist[2], SQLlist[3], SQLlist[4]
 
@@ -74,16 +74,15 @@ class MyServer:
             msg = 'Reg'
             return msg
 
-    async def deleteuser(self, db, SQLlist=tuple()):
+    async def deleteuser(self, db, SQLlist):
         try:
-            id_ = SQLlist[1]
-            await db.execute("DELETE FROM Cipher WHERE ID = :ID", {'ID': id_})
+            await db.execute("DELETE FROM Cipher WHERE ID = :ID", {'ID': SQLlist[1]})
             await db.commit()
         except (OSError, IndexError, Exception,  DatabaseError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
-            log.info(f"Сотрудник {id_} удален из БД")
+            log.info(f"Сотрудник {SQLlist[1]} удален из БД")
             msg = "OK"
             return msg
 
@@ -94,12 +93,9 @@ class MyServer:
                                        Category, FIO_employee, RegDate FROM records")
             records = await cursor.fetchall()
 
-            print_records = ''
-            for record in records:
-                print_records += '^'.join((str(record[0]), str(record[1]),\
-                                           str(record[2]), str(record[3]), str(record[4]),\
-                                           str(record[5]), str(record[6]), str(record[7]),\
-                                           str(record[8]), str(record[9]), str(record[10]), str(record[11]),'#'))
+            s = chain(*product(records, '#'))
+            s = map(str, chain.from_iterable(s))
+            print_records = '^'.join((*s,))
 
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
@@ -114,10 +110,9 @@ class MyServer:
                                        employee_FIO FROM Cipher")
             records = await cursor.fetchall()
 
-            print_logins = ''
-            for record in records:
-                print_logins += '^'.join((str(record[0]), str(record[1]),\
-                                          str(record[2]), str(record[3]), '#'))
+            s = chain(*product(records, '#'))
+            s = map(str, chain.from_iterable(s))
+            print_logins = '^'.join((*s,))
 
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
@@ -126,14 +121,12 @@ class MyServer:
             log.info("Запрос на информацию о сотрудниках")
             return print_logins
 
-    async def curquery(self, db, SQLlist=tuple()):
+    async def curquery(self, db, SQLlist):
         try:
-            recdate = SQLlist[1]
-            print_records = ''
             cursor = await db.execute("SELECT RecDate, FIO, address, telephone,\
                                        reason, information, for_master, master, record_value, Category,\
                                        FIO_employee, RegDate FROM records WHERE RecDate = :RecDate",\
-                                       {'RecDate': recdate})
+                                       {'RecDate': SQLlist[1]})
             records = await cursor.fetchall()
 
             if records == []:
@@ -141,11 +134,9 @@ class MyServer:
                 print_records = 'No'
             else:
                 log.info("Запрос на текущие заявки")
-                for record in records:
-                    print_records += '^'.join((str(record[0]), str(record[1]),\
-                                               str(record[2]), str(record[3]), str(record[4]), str(record[5]),\
-                                               str(record[6]), str(record[7]), str(record[8]), str(record[9]),\
-                                               str(record[10]), str(record[11]),'#'))
+                s = chain(*product(records, '#'))
+                s = map(str, chain.from_iterable(s))
+                print_records = '^'.join((*s,))
 
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
@@ -153,14 +144,8 @@ class MyServer:
         else:
             return print_records
 
-    async def insert(self, db, SQLlist=tuple()):
+    async def insert(self, db, SQLlist):
         try:
-            fio, address, telephone, reason, information, for_master,\
-            master, record_value, category, fio_employee, regdate, recdate =\
-                                                                            SQLlist[1], SQLlist[2], SQLlist[3],\
-                                                                            SQLlist[4], SQLlist[5], SQLlist[6], SQLlist[7],\
-                                                                            SQLlist[8], SQLlist[9], SQLlist[10], SQLlist[11], SQLlist[12]
-
             await db.execute("INSERT INTO records (FIO, address, telephone, reason,\
                               information, for_master, master, record_value, Category,\
                               FIO_employee, RegDate, RecDate)\
@@ -168,18 +153,18 @@ class MyServer:
                               :for_master, :master, :record_value, :Category, :FIO_employee,\
                               :RegDate, :RecDate)",
                               {
-                                'FIO': fio,
-                                'address': address,
-                                'telephone': telephone,
-                                'reason': reason,
-                                'information': information,
-                                'for_master': for_master,
-                                'master': master,
-                                'record_value': record_value,
-                                'Category': category,
-                                'FIO_employee': fio_employee,
-                                'RegDate': regdate,
-                                'RecDate': recdate
+                                'FIO': SQLlist[1],
+                                'address': SQLlist[2],
+                                'telephone': SQLlist[3],
+                                'reason': SQLlist[4],
+                                'information': SQLlist[5],
+                                'for_master': SQLlist[6],
+                                'master': SQLlist[7],
+                                'record_value': SQLlist[8],
+                                'Category': SQLlist[9],
+                                'FIO_employee': SQLlist[10],
+                                'RegDate': SQLlist[11],
+                                'RecDate': SQLlist[12]
                               })
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
@@ -190,12 +175,11 @@ class MyServer:
             msg = "Новая запись добавлена"
             return msg
 
-    async def delete(self, db, SQLlist=tuple()):
+    async def delete(self, db, SQLlist):
         try:
-            address, RegDate = SQLlist[1], SQLlist[2]
             await db.execute("DELETE FROM records\
                               WHERE address = :address AND\
-                              RegDate = :RegDate", {'address': address, 'RegDate': RegDate})
+                              RegDate = :RegDate", {'address': SQLlist[1], 'RegDate': SQLlist[2]})
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
@@ -205,14 +189,8 @@ class MyServer:
             msg = 'Запись удалена'
             return msg
 
-    async def update(self, db, SQLlist=tuple()):
+    async def update(self, db, SQLlist):
         try:
-            fio, address, telephone, reason, information, for_master,\
-            master, record_value, category, recdate =\
-                                                      SQLlist[1], SQLlist[2], SQLlist[3],\
-                                                      SQLlist[4], SQLlist[5], SQLlist[6],\
-                                                      SQLlist[7], SQLlist[8], SQLlist[9], SQLlist[10]
-
             await db.execute("UPDATE records\
                               SET FIO = :FIO, address = :address, telephone = :telephone,\
                               reason = :reason, information = :information,\
@@ -220,16 +198,16 @@ class MyServer:
                               record_value = :record_value, Category = :Category, RecDate = :RecDate\
                               WHERE address = :address",
                               {
-                                'FIO': fio,
-                                'address': address,
-                                'telephone': telephone,
-                                'reason': reason,
-                                'information': information,
-                                'for_master': for_master,
-                                'master': master,
-                                'record_value': record_value,
-                                'Category': category,
-                                'RecDate': recdate
+                                'FIO': SQLlist[1],
+                                'address': SQLlist[2],
+                                'telephone': SQLlist[3],
+                                'reason': SQLlist[4],
+                                'information': SQLlist[5],
+                                'for_master': SQLlist[6],
+                                'master': SQLlist[7],
+                                'record_value': SQLlist[8],
+                                'Category': SQLlist[9],
+                                'RecDate': SQLlist[10]
                               })
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
@@ -451,15 +429,11 @@ class MyServer:
             if encrypt_task in done:
                 try:
                     query = encrypt_task.result()
-                    query_length = len(query)
-                    send_length = str(query_length).encode('utf8')
-                    send_length += b' ' * (self.HEADER - len(send_length))
                 except Exception:
                     log.error("Exception occurred", exc_info=True)
                     raise
                 else:
                     try:
-                        client_writer.write(send_length)
                         client_writer.write(query)
                     except (Exception, OSError, ConnectionError, RuntimeError,\
                             asyncio.CancelledError, asyncio.InvalidStateError, asyncio.TimeoutError):
@@ -495,12 +469,10 @@ class MyServer:
 
 if __name__ == "__main__":
     Server = MyServer()
-    aiolog.start()
-    log = logging.getLogger('')
+    log = logging.getLogger('asyncio')
     f_format = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     log.setLevel(logging.INFO)
     f_handler = logging.FileHandler('ServerLog.log')
-    f_handler.setLevel(logging.INFO)
     f_handler.setFormatter(f_format)
     log.addHandler(f_handler)
     try:

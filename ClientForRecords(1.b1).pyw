@@ -6,6 +6,7 @@ from tkinter.filedialog import askopenfile
 from tkcalendar import DateEntry
 from xlsxwriter.workbook import Workbook
 from datetime import datetime
+from itertools import chain
 from functools import cache, lru_cache
 import os
 import time
@@ -41,8 +42,8 @@ class Functions:
            Сортирует входящие сообщения
         """
         try:
-            __dataMessage = ReceivedData.split('#')
-            __ReceivedMsg = (tuple(__s.split('^')) for __s in __dataMessage)
+            __dataMessage = ReceivedData.split('#^')
+            __ReceivedMsg = (__s.split('^') for __s in __dataMessage)
             __ReceivedMsg = (__x for __x in __ReceivedMsg if __x != ('',))
         except (AttributeError, TypeError) as err:
             messagebox.showinfo("Ошибка", err)
@@ -148,12 +149,13 @@ class Table(Frame):
             try:
                 if __item:
                     __data = self.__tree.item(__item)['values']
-                    Functions().InsertInEntryes(entryes=((__RT.FIO_entry,str(__data[1])),\
-                                                         (__RT.address_entry,str(__data[2])), (__RT.telephone_entry,str(__data[3])),\
-                                                         (__RT.reason_entry,str(__data[4])), (__RT.information_entry,str(__data[5])),\
-                                                         (__RT.for_master_entry,str(__data[6])), (__RT.master_entry,str(__data[7]))))
-                    __RT.r_var.set(str(__data[8])), __RT.Category.set(str(__data[9])),\
-                    __RT.Date.set(str(__data[0])), __RT.RegDate.set(str(__data[11]))
+                    __data = list(chain(map(str, __data)))
+                    Functions().InsertInEntryes(entryes=((__RT.FIO_entry, __data[1]),\
+                                                         (__RT.address_entry, __data[2]), (__RT.telephone_entry, __data[3]),\
+                                                         (__RT.reason_entry, __data[4]), (__RT.information_entry, __data[5]),\
+                                                         (__RT.for_master_entry, __data[6]), (__RT.master_entry, __data[7])))
+                    __RT.r_var.set(__data[8]), __RT.Category.set(__data[9]),\
+                    __RT.Date.set(__data[0]), __RT.RegDate.set(__data[11])
                 else:
                     messagebox.showinfo("Внимание", "Выберите строку в таблице")
             except (Exception, IndexError,\
@@ -337,14 +339,13 @@ class Registration(Toplevel):
             raise
         else:
             try:
-                __ToAuth = "^".join(("REGISTER",\
-                                                reg_tuple[0], reg_tuple[1], reg_tuple[2], reg_tuple[3]))
+                __ToAuth = "^".join(("REGISTER", *reg_tuple))
                 __msg = Internet().IntoNetwork(data=__ToAuth)
             except Exception:
                 raise
             else:
                 if __msg == "Reg":
-                    add_user = [[reg_tuple[0], reg_tuple[1], reg_tuple[2], reg_tuple[3]]]
+                    add_user = (reg_tuple)
                     Registration.table.AddQuery(entry=add_user)
                 else:
                     pass
@@ -406,12 +407,12 @@ class Authentication(Tk):
         self.__entr_button.bind('<Return>', lambda x: self.__MainWindow())
         self.__password_entry.bind('<Return>', lambda x: self.__MainWindow())
 
-        self.__chkbtn=Checkbutton(self, activeforeground='White',\
-                                  activebackground='gray10', bg="gray10",\
-                                  font=("Times New Roman", 12), fg='White',\
-                                  text="Показать пароль", selectcolor='gray10',\
-                                  variable=Authentication.__ent, onvalue=1, offvalue=0,\
-                                  command=lambda: self.__ShowPas())
+        self.__chkbtn = Checkbutton(self, activeforeground='White',\
+                                    activebackground='gray10', bg="gray10",\
+                                    font=("Times New Roman", 12), fg='White',\
+                                    text="Показать пароль", selectcolor='gray10',\
+                                    variable=Authentication.__ent, onvalue=1, offvalue=0,\
+                                    command=lambda: self.__ShowPas())
 
         self.__entr_button.place(relwidth=0.30,\
                                  relheight=0.16, relx=0.10, rely=0.75)
@@ -601,7 +602,8 @@ class Root(Tk):
                                                                     self.for_master_entry, self.master_entry, self.__r1,\
                                                                     self.__r2, self.__cal, self.__monthchoosen,\
                                                                     self.__delete_button, self.__add_button, self.__srch_button,\
-                                                                    self.__update_button, self.__clear_button)) if self.__menu_visibility else self.__ShowMenu())
+                                                                    self.__update_button, self.__clear_button))\
+                                                                    if self.__menu_visibility else self.__ShowMenu())
 
         self.__tick()
 
@@ -631,7 +633,7 @@ class Root(Tk):
 
         self.__update_button = Button(self, font=("Times New Roman", 12),\
                                       fg="gray1", text="Обновить Запись",\
-                                      width=15, command=self.Update_data)
+                                      width=15, command=self.Update_record)
 
         self.__clear_button = Button(self, font=("Times New Roman", 12),\
                                      fg="gray1", text="Очистить Поля Ввода", width=15,\
@@ -738,10 +740,7 @@ class Root(Tk):
                     Root.isfull_label.configure(text="")
                     messagebox.showinfo("Data:", __ReceivedData)
 
-                    __list_for_table = [[__variables[11], __variables[0],\
-                                         __variables[1], __variables[2], __variables[3],\
-                                         __variables[4], __variables[5], __variables[6],\
-                                         __variables[7], __variables[8], __variables[9], __variables[10]]]
+                    __list_for_table = [[__variables[11], *__variables[0:10]]]
                     Root.table.AddQuery(entry=__list_for_table)
             except (IndexError, Exception, TypeError) as exc:
                 messagebox.showinfo("Ошибка:", exc)
@@ -792,6 +791,7 @@ class Root(Tk):
             __ReceivedData = Internet().IntoNetwork(data=__request)
             messagebox.showinfo("Data:", __ReceivedData)
             Root.table.DeleteQuery(adr=adr, regdate=date)
+
         message = "Вы уверены, что хотите удалить заявку?"
         if messagebox.askyesno(message=message, parent=self):
             try:
@@ -805,7 +805,7 @@ class Root(Tk):
                         messagebox.showinfo("Ошибка", "Заполните адресс корректно")
                     elif Root.r_var.get() == "Открыта":
                         message = "Заявка в открытом состоянии,\
-                                   вы уверены что хотите удалить заявку?"
+                                   \nвы уверены что хотите удалить заявку?"
                         result = messagebox.askyesno(message=message, parent=self)
                         if result:
                                 Connect(__DADR, __RegDate)
@@ -814,7 +814,7 @@ class Root(Tk):
                 except Exception as exc:
                     messagebox.showinfo("Ошибка:", exc)
 
-    def Update_data(self):
+    def Update_record(self):
         """Sending data from record
            to our server with keyword UPDATE
            wich triggers UPDATE command in our DB
@@ -846,9 +846,7 @@ class Root(Tk):
                     __ReceivedData = Internet().IntoNetwork(data=__request)
                     messagebox.showinfo("Data:", __ReceivedData)
 
-                    __gr_var = [[__variables[9], __variables[0], __variables[1],\
-                                 __variables[2], __variables[3], __variables[4],\
-                                 __variables[5], __variables[6], __variables[7], __variables[8]]]
+                    __gr_var = [[__variables[9], *__variables[0:8]]]
                     Root.table.RenewQuery(trigger=__variables[0], entry=__gr_var)
             except (Exception, IndexError) as exc:
                 messagebox.showinfo("Ошибка:", exc)
@@ -907,9 +905,9 @@ class Root(Tk):
             self.update_idletasks()
             [__i.place_forget() for __i in widg]
             Root.table.place(relwidth=0.98,\
-                            relheight=0.90, relx=0.01, rely=0.05)
+                             relheight=0.90, relx=0.01, rely=0.05)
             self.__curdate.place(relwidth=0.13,\
-                                relheight=0.03, relx=0.01, rely=0.01)
+                                 relheight=0.03, relx=0.01, rely=0.01)
             Root.isfull_label.place(relwidth=0.15,\
                                     relheight=0.03, relx=0.43, rely=0.01)
             time.sleep(0.2)

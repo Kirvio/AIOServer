@@ -32,21 +32,22 @@ class Internet:
            that contents the length of the incoming message
         """
 
-        __HEADER = 64
         try:
+            _recv_buffer = b''
             __query = self.encrypt_message(data)
             self._sock.sendall(__query)
             self._sock.send(b'^\n')
             while True:
-                __msg_length = self._sock.recv(__HEADER).decode('utf8')
-                __msg = self._sock.recv(int(__msg_length))
-                if not __msg: break
-                __ready = self.decrypt_message(__msg)
-                if __ready: return __ready
+                __msg = self._sock.recv(1024)
+                if __msg: 
+                    _recv_buffer += __msg
+                else: break
         except (UnicodeDecodeError, error,\
-                ValueError, OSError, InterruptedError) as __err:
+                ValueError, OSError, InterruptedError, Exception) as __err:
             messagebox.showinfo("Ошибка", __err)
-            return False
+        else:
+            __ready = self.decrypt_message(_recv_buffer)
+            if __ready: return __ready
 
     def decrypt_message(self, message, path=__key_path):
         try:
