@@ -18,7 +18,6 @@ class MyServer:
        с запросами в БД, используется python 3.9.1
        в EAFP стиле
     """
-    HEADER = 64
 
     def __init__(self):
 
@@ -27,6 +26,17 @@ class MyServer:
 
         # this keep tracking all client tasks inside
         self.clients = {}
+
+    async def iterate_(self, data):
+        try:
+            s = chain(*product(data, '#'))
+            s = map(str, chain.from_iterable(s))
+            s = '^'.join((*s,))
+        except Exception:
+            log.error("Exception occurred", exc_info=True)
+            raise
+        else:
+            return s 
 
     async def enter(self, db, SQLlist):
         try:
@@ -93,9 +103,7 @@ class MyServer:
                                        Category, FIO_employee, RegDate FROM records")
             records = await cursor.fetchall()
 
-            s = chain(*product(records, '#'))
-            s = map(str, chain.from_iterable(s))
-            print_records = '^'.join((*s,))
+            print_records = await self.iterate_(records)
 
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
@@ -109,10 +117,7 @@ class MyServer:
             cursor = await db.execute("SELECT ID, Login, Password,\
                                        employee_FIO FROM Cipher")
             records = await cursor.fetchall()
-
-            s = chain(*product(records, '#'))
-            s = map(str, chain.from_iterable(s))
-            print_logins = '^'.join((*s,))
+            print_logins = await self.iterate_(records)
 
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
@@ -134,9 +139,7 @@ class MyServer:
                 print_records = 'No'
             else:
                 log.info("Запрос на текущие заявки")
-                s = chain(*product(records, '#'))
-                s = map(str, chain.from_iterable(s))
-                print_records = '^'.join((*s,))
+                print_records = await self.iterate_(records)
 
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
