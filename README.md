@@ -12,7 +12,6 @@ The purpose of this project is to better manage requests from clients to call th
       pip3 install aiosqlite
       pip3 install cryptography
       pip3 install xlsxwriter
-      pip3 install aiolog
       pip3 install tkcalendar
       pip3 install bcrypt
     put all .py and .pyw scripts in the same folder
