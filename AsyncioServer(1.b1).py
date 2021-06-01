@@ -22,7 +22,6 @@ class MyServer:
     def __init__(self):
 
         # Enables logs inside class
-        # log = logging.getLogger(__name__)
 
         # this keep tracking all client tasks inside
         self.clients = {}
@@ -40,18 +39,17 @@ class MyServer:
 
     async def enter(self, db, SQLlist):
         try:
-            Log, Passs = SQLlist[1], SQLlist[2]
             cursor = await db.execute("SELECT Password FROM Cipher WHERE Login = :Login",
-                                      {'Login': Log})
+                                      {'Login': SQLlist[1]})
             msg_ = await cursor.fetchone()
             if msg_:
                 check_ = (await asyncio.wait_for(\
-                                                 AsyncioBlockingIO().check_pass(Passs, msg_[0]), timeout=5.0))
+                                                 AsyncioBlockingIO().check_pass(SQLlist[2], msg_[0]), timeout=5.0))
                 if check_:
                     cursor_ = await db.execute("SELECT employee_FIO FROM Cipher WHERE Login = :Login",
-                                               {'Login': Log})
+                                               {'Login': SQLlist[1]})
                     msg_ = await cursor_.fetchone()
-                    log.info(f"Сотрудник {Log} авторизировался")
+                    log.info(f"Сотрудник {SQLlist[1]} авторизировался")
                     msg_ = "^".join(["GO", msg_[0]])
                 else:
                     log.info("Попытка входа с неправильным паролем")
@@ -238,49 +236,49 @@ class MyServer:
             try:
                 async with connect("address_book.db") as db:
                     if keyword == "ENTER":
-                        enter_ = (await asyncio.shield(\
-                                        asyncio.wait_for(\
-                                                         self.enter(db, SQLlist), timeout=5.0)))
+                        enter_ = await asyncio.shield(\
+                                       asyncio.wait_for(\
+                                                        self.enter(db, SQLlist), timeout=5.0))
                         return enter_
                     elif keyword == "REGISTER":
-                        register_ = (await asyncio.shield(\
-                                           asyncio.wait_for(\
-                                                            self.register(db, SQLlist), timeout=5.0)))
+                        register_ = await asyncio.shield(\
+                                          asyncio.wait_for(\
+                                                           self.register(db, SQLlist), timeout=5.0))
                         return register_
                     elif keyword == "DELETEUSER":
-                        delete_user_ = (await asyncio.shield(\
+                        delete_user_ = await asyncio.shield(\
                                               asyncio.wait_for(\
-                                                               self.deleteuser(db, SQLlist), timeout=5.0)))
+                                                               self.deleteuser(db, SQLlist), timeout=5.0))
                         return delete_user_
                     elif keyword == "ALLQUERY":
-                        all_query_ = (await asyncio.shield(\
-                                            asyncio.wait_for(\
-                                                             self.allquery(db), timeout=5.0)))
+                        all_query_ = await asyncio.shield(\
+                                           asyncio.wait_for(\
+                                                            self.allquery(db), timeout=5.0))
                         return all_query_
                     elif keyword == "USERQUERY":
-                        user_query_ = (await asyncio.shield(\
-                                             asyncio.wait_for(\
-                                                              self.userquery(db), timeout=5.0)))
+                        user_query_ = await asyncio.shield(\
+                                            asyncio.wait_for(\
+                                                             self.userquery(db), timeout=5.0))
                         return user_query_
                     elif keyword == "CURQUERY":
-                        cur_query_ = (await asyncio.shield(\
-                                            asyncio.wait_for(\
-                                                             self.curquery(db, SQLlist), timeout=5.0)))
+                        cur_query_ = await asyncio.shield(\
+                                           asyncio.wait_for(\
+                                                            self.curquery(db, SQLlist), timeout=5.0))
                         return cur_query_
                     elif keyword == "INSERT":
-                        insert_ = (await asyncio.shield(\
-                                         asyncio.wait_for(\
-                                                          self.insert(db, SQLlist), timeout=5.0)))
+                        insert_ = await asyncio.shield(\
+                                        asyncio.wait_for(\
+                                                         self.insert(db, SQLlist), timeout=5.0))
                         return insert_
                     elif keyword == "DELETE":
-                        delete_ = (await asyncio.shield(\
-                                         asyncio.wait_for(\
-                                                          self.delete(db, SQLlist), timeout=5.0)))
+                        delete_ = await asyncio.shield(\
+                                        asyncio.wait_for(\
+                                                         self.delete(db, SQLlist), timeout=5.0))
                         return delete_
                     elif keyword == "UPDATE":
-                        update_ = (await asyncio.shield(\
-                                         asyncio.wait_for(\
-                                                          self.update(db, SQLlist), timeout=5.0)))
+                        update_ = await asyncio.shield(\
+                                        asyncio.wait_for(\
+                                                         self.update(db, SQLlist), timeout=5.0))
                         return update_
                     else:
                         log.info("Поступил неправильный запрос")
@@ -400,11 +398,8 @@ class MyServer:
                                         # when write Task is done, .cancel all Tasks
                                         if write_task in done:
                                             try:
-                                                tasks = [read_data_task, decrypt_data_task, db_task, write_task]
-                                                cancel_ = [task.cancel() for task in tasks]
-                                                if cancel_:
-                                                    print("Connection finished")
-                                                    return
+                                                print("Connection finished")
+                                                return
                                             except (OSError, Exception, RuntimeError,\
                                                     asyncio.TimeoutError, asyncio.InvalidStateError):
                                                 log.error("Exception occurred", exc_info=True)
@@ -421,7 +416,8 @@ class MyServer:
 
         # Encrypts a new message and calculate it's length to send
         try:
-            encrypt_task = asyncio.create_task(AsyncioBlockingIO().encrypt_message(data))
+            encrypt_task = asyncio.create_task(\
+                                               AsyncioBlockingIO().encrypt_message(data))
             done, pending = await asyncio.shield(\
                                   asyncio.wait({encrypt_task}))
         except (OSError, Exception, RuntimeError,\
@@ -444,8 +440,6 @@ class MyServer:
                         raise
                     else:
                         await client_writer.drain()
-                    finally:
-                        encrypt_task.cancel()
 
     async def start(self):
         """This coroutine starts our async TCP server
