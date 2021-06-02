@@ -69,7 +69,7 @@ class MyServer:
                                                AsyncioBlockingIO().to_hash_password(SQLlist[3]), timeout=5.0))
             await db.execute("INSERT INTO Cipher (ID, Login, Password, employee_FIO)\
                               VALUES (:ID, :Login, :Password, :employee_FIO)",
-                              {'ID': SQLlist[1], 'Login': SQLlist[2], 'Password': SQLlist[3], 'employee_FIO': SQLlist[4]})
+                              {'ID': SQLlist[1], 'Login': SQLlist[2], 'Password': new_hash, 'employee_FIO': SQLlist[4]})
             await db.commit()
 
             log.info(f"Сотрудник {SQLlist[4]} зарегистрирован")
