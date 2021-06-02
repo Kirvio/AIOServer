@@ -1,6 +1,6 @@
 import asyncio
 import sys
-import socket
+from socket import AF_INET
 import logging
 from itertools import chain, product
 try:
@@ -41,40 +41,38 @@ class MyServer:
         try:
             cursor = await db.execute("SELECT Password FROM Cipher WHERE Login = :Login",
                                       {'Login': SQLlist[1]})
-            msg_ = await cursor.fetchone()
-            if msg_:
+            cursor = await cursor.fetchone()
+            if cursor:
                 check_ = (await asyncio.wait_for(\
-                                                 AsyncioBlockingIO().check_pass(SQLlist[2], msg_[0]), timeout=5.0))
+                                                 AsyncioBlockingIO().check_pass(SQLlist[2], cursor[0]), timeout=5.0))
                 if check_:
-                    cursor_ = await db.execute("SELECT employee_FIO FROM Cipher WHERE Login = :Login",
+                    cursor = await db.execute("SELECT employee_FIO FROM Cipher WHERE Login = :Login",
                                                {'Login': SQLlist[1]})
-                    msg_ = await cursor_.fetchone()
+                    cursor = await cursor.fetchone()
                     log.info(f"Сотрудник {SQLlist[1]} авторизировался")
-                    msg_ = "^".join(["GO", msg_[0]])
+                    cursor = "^".join(["GO", cursor[0]])
                 else:
                     log.info("Попытка входа с неправильным паролем")
-                    msg_ = "Fail"
+                    cursor = "Fail"
             else:
-                msg_ = "NOLOG"
+                cursor = "NOLOG"
 
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
-            return msg_
+            return cursor
 
     async def register(self, db, SQLlist):
         try:
-            id_, login, password, fio = SQLlist[1], SQLlist[2], SQLlist[3], SQLlist[4]
-
             new_hash = (await asyncio.wait_for(\
-                                               AsyncioBlockingIO().to_hash_password(password), timeout=5.0))
+                                               AsyncioBlockingIO().to_hash_password(SQLlist[3]), timeout=5.0))
             await db.execute("INSERT INTO Cipher (ID, Login, Password, employee_FIO)\
                               VALUES (:ID, :Login, :Password, :employee_FIO)",
-                              {'ID': id_, 'Login': login, 'Password': new_hash, 'employee_FIO': fio})
+                              {'ID': SQLlist[1], 'Login': SQLlist[2], 'Password': new_hash, 'employee_FIO': SQLlist[4]})
             await db.commit()
 
-            log.info(f"Сотрудник {fio} зарегистрирован")
+            log.info(f"Сотрудник {SQLlist[4]} зарегистрирован")
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
             raise
@@ -99,30 +97,30 @@ class MyServer:
             cursor = await db.execute("SELECT RecDate, FIO, address,\
                                        telephone, reason, information, for_master, master, record_value,\
                                        Category, FIO_employee, RegDate FROM records")
-            records = await cursor.fetchall()
+            cursor = await cursor.fetchall()
 
-            print_records = await self.iterate_(records)
+            cursor = await self.iterate_(cursor)
 
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
             log.info("Запрос на все заявки")
-            return print_records
+            return cursor
 
     async def userquery(self, db):
         try:
             cursor = await db.execute("SELECT ID, Login, Password,\
                                        employee_FIO FROM Cipher")
-            records = await cursor.fetchall()
-            print_logins = await self.iterate_(records)
+            cursor = await cursor.fetchall()
+            cursor = await self.iterate_(cursor)
 
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
             log.info("Запрос на информацию о сотрудниках")
-            return print_logins
+            return cursor
 
     async def curquery(self, db, SQLlist):
         try:
@@ -130,20 +128,20 @@ class MyServer:
                                        reason, information, for_master, master, record_value, Category,\
                                        FIO_employee, RegDate FROM records WHERE RecDate = :RecDate",\
                                        {'RecDate': SQLlist[1]})
-            records = await cursor.fetchall()
+            cursor = await cursor.fetchall()
 
-            if records == []:
+            if cursor == []:
                 print("На текущий день ничего нет")
-                print_records = 'No'
+                cursor = 'No'
             else:
                 log.info("Запрос на текущие заявки")
-                print_records = await self.iterate_(records)
+                cursor = await self.iterate_(cursor)
 
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
-            return print_records
+            return cursor
 
     async def insert(self, db, SQLlist):
         try:
@@ -288,24 +286,26 @@ class MyServer:
                 log.error("Exception occured", exc_info=True)
                 raise
 
+    # when hadle_client Task in done state, closing connection
+    # and deleting connection from connections list
+    async def client_done(self, task, client_writer):
+        try:
+            del self.clients[task]
+            print("client task done", file = sys.stderr)
+            client_writer.close()
+            await client_writer.wait_closed()
+        except (OSError, ConnectionError, RuntimeError,\
+                asyncio.CancelledError, asyncio.InvalidStateError, asyncio.TimeoutError):
+            log.error("Exception occurred", exc_info=True)
+            raise
+        else:
+            return
+
     async def accept_client(self, client_reader, client_writer):
         """This coroutine is used to accept client connection
            Эта корутина используется для обработки соединений
            от TCP клиента
         """
-
-        # when hadle_client Task in done state, closing connection
-        # and deleting connection from connections list
-        async def client_done(task):
-            try:
-                del self.clients[task]
-                print("client task done", file = sys.stderr)
-                client_writer.close()
-                await client_writer.wait_closed()
-            except (OSError, ConnectionError, RuntimeError,\
-                    asyncio.CancelledError, asyncio.InvalidStateError, asyncio.TimeoutError):
-                log.error("Exception occurred", exc_info=True)
-                raise
 
         # start a new Task to handle this specific client connection
         try:
@@ -327,7 +327,7 @@ class MyServer:
                 if handle_task in done:
                     handle_task.cancel()
                     try:
-                        done_task = asyncio.create_task(client_done(handle_task))
+                        done_task = asyncio.create_task(self.client_done(handle_task, client_writer))
                         done, pending = await asyncio.shield(\
                                               asyncio.wait({done_task}))
                     except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
@@ -454,7 +454,7 @@ class MyServer:
         """
         self.server = await asyncio.start_server(self.accept_client,\
                                                  host='172.20.20.14', port=43333,\
-                                                 family=socket.AF_INET,\
+                                                 family=AF_INET,\
                                                  backlog=20, reuse_address=True)
 
         addr = self.server.sockets[0].getsockname()
