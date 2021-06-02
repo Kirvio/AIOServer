@@ -27,8 +27,7 @@ class AsyncioBlockingIO:
     # (good for cpu bound functions that release the GIL such as `bcrypt.checkpw`)
     def asyncify(func):
         async def inner(*args, **kwargs):
-            loop = asyncio.get_running_loop()
-            func_out = await loop.run_in_executor(None, func, *args, **kwargs)
+            func_out = await asyncio.to_thread(func, *args, **kwargs)
             return func_out
         return inner
 
