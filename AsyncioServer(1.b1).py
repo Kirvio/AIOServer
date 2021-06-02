@@ -65,16 +65,14 @@ class MyServer:
 
     async def register(self, db, SQLlist):
         try:
-            id_, login, password, fio = SQLlist[1], SQLlist[2], SQLlist[3], SQLlist[4]
-
             new_hash = (await asyncio.wait_for(\
-                                               AsyncioBlockingIO().to_hash_password(password), timeout=5.0))
+                                               AsyncioBlockingIO().to_hash_password(SQLlist[3]), timeout=5.0))
             await db.execute("INSERT INTO Cipher (ID, Login, Password, employee_FIO)\
                               VALUES (:ID, :Login, :Password, :employee_FIO)",
-                              {'ID': id_, 'Login': login, 'Password': new_hash, 'employee_FIO': fio})
+                              {'ID': SQLlist[1], 'Login': SQLlist[2], 'Password': SQLlist[3], 'employee_FIO': SQLlist[4]})
             await db.commit()
 
-            log.info(f"Сотрудник {fio} зарегистрирован")
+            log.info(f"Сотрудник {SQLlist[4]} зарегистрирован")
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
             raise
