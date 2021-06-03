@@ -6,7 +6,6 @@ from tkinter.filedialog import askopenfile
 from tkcalendar import DateEntry
 from xlsxwriter.workbook import Workbook
 from datetime import datetime
-from itertools import chain
 from functools import cache, lru_cache
 import os
 import time
@@ -19,7 +18,6 @@ except ImportError:
 class Functions:
     """Main functions"""
 
-    @cache
     def InsertInEntryes(self, entryes=tuple(), dell=int()):
         """Insenrting values in entryes
            if some values already there
@@ -149,11 +147,9 @@ class Table(Frame):
             try:
                 if __item:
                     __data = self.__tree.item(__item)['values']
-                    __data = list(chain(map(str, __data)))
-                    Functions().InsertInEntryes(entryes=((__RT.FIO_entry, __data[1]),\
-                                                         (__RT.address_entry, __data[2]), (__RT.telephone_entry, __data[3]),\
-                                                         (__RT.reason_entry, __data[4]), (__RT.information_entry, __data[5]),\
-                                                         (__RT.for_master_entry, __data[6]), (__RT.master_entry, __data[7])))
+                    __data = list(map(str, __data))
+                    __data_list = list(zip(__RT.entryes_tuple, __data[1:8]))
+                    Functions().InsertInEntryes(entryes=__data_list)
                     __RT.r_var.set(__data[8]), __RT.Category.set(__data[9]),\
                     __RT.Date.set(__data[0]), __RT.RegDate.set(__data[11])
                 else:
@@ -502,7 +498,12 @@ class Root(Tk):
                                                               StringVar(), StringVar(), StringVar(), StringVar(),\
                                                               StringVar(), StringVar(), StringVar()
         Root.r_var.set('Открыта')
-
+        
+        self.__variables =(Root.FIO.get(), Root.address.get(),\
+                           Root.telephone.get(), Root.reason.get(),\
+                           Root.information.get(), Root.for_master.get(),\
+                           Root.master.get(), Root.r_var.get(),\
+                           Root.Category.get())
         self.title(Authentication.FIO_employee)
 
         MyLeftPos = (self.winfo_screenwidth() - 1200) / 2
@@ -536,6 +537,10 @@ class Root(Tk):
         self.master_entry = Entry(self, selectforeground='gray1',\
                                   selectbackground='sky blue', font=("Times New Roman", 12),\
                                   textvariable=Root.master, width=18)
+        Root.entryes_tuple = (self.FIO_entry, self.address_entry,\
+                              self.telephone_entry, self.reason_entry,\
+                              self.information_entry, self.for_master_entry,\
+                              self.master_entry)
 
         self.__monthchoosen = ttk.Combobox(self, font=("Times New Roman", 12),\
                                            width=18, textvariable=Root.Category)
@@ -591,20 +596,6 @@ class Root(Tk):
         Root.isfull_label = Label(self, bg="gray10",\
                                   fg="white", font=("Times New Roman", 12))
 
-        self.__menu_visibility = True
-        self.bind("<Control-Key-o>",\
-                                    lambda x: self.__HideMenu(widg=(self.__category_label, self.__FIO_label,\
-                                                                    self.__address_label, self.__telephone_label,\
-                                                                    self.__reason_label, self.__information_label,\
-                                                                    self.__for_master_label, self.__master_label, self.__record_value_label,\
-                                                                    self.__data_label, self.FIO_entry, self.address_entry,\
-                                                                    self.telephone_entry, self.reason_entry, self.information_entry,\
-                                                                    self.for_master_entry, self.master_entry, self.__r1,\
-                                                                    self.__r2, self.__cal, self.__monthchoosen,\
-                                                                    self.__delete_button, self.__add_button, self.__srch_button,\
-                                                                    self.__update_button, self.__clear_button))\
-                                                                    if self.__menu_visibility else self.__ShowMenu())
-
         self.__tick()
 
         self.__r1 = Radiobutton(self, activeforeground='White',\
@@ -637,26 +628,26 @@ class Root(Tk):
 
         self.__clear_button = Button(self, font=("Times New Roman", 12),\
                                      fg="gray1", text="Очистить Поля Ввода", width=15,\
-                                     command=lambda: Functions().InsertInEntryes(entryes=(\
-                                                                                          self.FIO_entry, self.address_entry,\
-                                                                                          self.telephone_entry, self.reason_entry,\
-                                                                                          self.information_entry, self.for_master_entry,\
-                                                                                          self.master_entry), dell=1))
+                                     command=lambda: Functions().InsertInEntryes(entryes=Root.entryes_tuple, dell=1))
+        root_tuple = (self.__category_label, self.__FIO_label,\
+                      self.__address_label, self.__telephone_label,\
+                      self.__reason_label, self.__information_label,\
+                      self.__for_master_label, self.__master_label, self.__record_value_label,\
+                      self.__data_label, *Root.entryes_tuple, self.__r1,\
+                      self.__r2, self.__cal, self.__monthchoosen,\
+                      self.__delete_button, self.__add_button, self.__srch_button,\
+                      self.__update_button, self.__clear_button)
+
+        self.__menu_visibility = True
+        self.bind("<Control-Key-o>",\
+                                    lambda x: self.__HideMenu(widg= \
+                                                                    root_tuple if self.__menu_visibility else self.__ShowMenu()))
 
         __m = Menu(self)
         __m_edit = Menu(__m, font=("Times New Roman", 11), tearoff=0)
         __m.add_cascade(menu=__m_edit, label="Меню")
         __m_edit.add_command(label="Скрыть меню",\
-                             command=lambda: self.__HideMenu(widg=(\
-                                                                   self.__category_label, self.__FIO_label, self.__address_label,\
-                                                                   self.__telephone_label, self.__reason_label, self.__information_label,\
-                                                                   self.__for_master_label, self.__master_label, self.__record_value_label,\
-                                                                   self.__data_label, self.FIO_entry, self.address_entry,\
-                                                                   self.telephone_entry, self.reason_entry, self.information_entry,\
-                                                                   self.for_master_entry, self.master_entry, self.__r1,\
-                                                                   self.__r2, self.__cal, self.__monthchoosen,\
-                                                                   self.__delete_button, self.__add_button, self.__srch_button,\
-                                                                   self.__update_button, self.__clear_button)))
+                             command=lambda: self.__HideMenu(widg=root_tuple))
         __m_edit.add_command(label="Показать меню", command=self.__ShowMenu)
         __m_edit.add_separator()
         __m_edit.add_command(label="Экспорт в Excel",\
@@ -720,10 +711,7 @@ class Root(Tk):
         try:
             __now = datetime.now()
             __d_string = __now.strftime("%d-%m-%Y")
-            __variables = (Root.FIO.get(), Root.address.get(), Root.telephone.get(),\
-                           Root.reason.get(), Root.information.get(),\
-                           Root.for_master.get(), Root.master.get(), Root.r_var.get(),\
-                           Root.Category.get(), Authentication.FIO_employee, __d_string, Root.Date.get())
+            __variables = (*self.__variables, Authentication.FIO_employee, __d_string, Root.Date.get())
             __pattern = r'[A-Za-z]'
             __kek = [__z for __z in __variables if __z == ''\
                      or len(__z) > 100 or re.findall(__pattern, __z)]
@@ -793,7 +781,8 @@ class Root(Tk):
             Root.table.DeleteQuery(adr=adr, regdate=date)
 
         message = "Вы уверены, что хотите удалить заявку?"
-        if messagebox.askyesno(message=message, parent=self):
+        result = messagebox.askyesno(message=message, parent=self)
+        if result:
             try:
                 __pattern = r'[A-Za-z]'
                 __DADR, __RegDate = Root.address.get(), Root.RegDate.get()
@@ -809,10 +798,14 @@ class Root(Tk):
                         result = messagebox.askyesno(message=message, parent=self)
                         if result:
                                 Connect(__DADR, __RegDate)
+                        else:
+                            pass
                     else:
                         Connect(__DADR, __RegDate)
                 except Exception as exc:
                     messagebox.showinfo("Ошибка:", exc)
+        else:
+            pass
 
     def Update_record(self):
         """Sending data from record
@@ -826,11 +819,7 @@ class Root(Tk):
            и обновляет заявку с нужным адрессом
         """
         try:
-            __variables = (Root.FIO.get(), Root.address.get(),\
-                           Root.telephone.get(), Root.reason.get(),\
-                           Root.information.get(), Root.for_master.get(),\
-                           Root.master.get(), Root.r_var.get(),\
-                           Root.Category.get(), Root.Date.get())
+            __variables = (self.__variables, Root.Date.get())
 
             __pattern = r'[A-Za-z]'
             __kek = [__z for __z in __variables\
@@ -842,12 +831,17 @@ class Root(Tk):
                 if __kek:
                     messagebox.showinfo("Ошибка", "Ошибка в тексте!")
                 else:
-                    __request = "^".join(("UPDATE", *__variables))
-                    __ReceivedData = Internet().IntoNetwork(data=__request)
-                    messagebox.showinfo("Data:", __ReceivedData)
+                    message = "Вы уверены, что хотите обновить заявку?"
+                    result = messagebox.askyesno(message=message, parent=self)
+                    if result:
+                        __request = "^".join(("UPDATE", *__variables))
+                        __ReceivedData = Internet().IntoNetwork(data=__request)
+                        messagebox.showinfo("Data:", __ReceivedData)
 
-                    __gr_var = [[__variables[9], *__variables[0:8]]]
-                    Root.table.RenewQuery(trigger=__variables[0], entry=__gr_var)
+                        __gr_var = [[__variables[9], *__variables[0:8]]]
+                        Root.table.RenewQuery(trigger=__variables[0], entry=__gr_var)
+                    else:
+                        pass
             except (Exception, IndexError) as exc:
                 messagebox.showinfo("Ошибка:", exc)
 
