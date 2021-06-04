@@ -4,6 +4,7 @@ from cryptography.fernet import Fernet as FN
 from socket import error, create_connection
 from tkinter import messagebox
 from functools import lru_cache
+from operator import iadd
 
 @lru_cache(typed=True)
 class Internet:
@@ -40,7 +41,7 @@ class Internet:
             while True:
                 __msg = self._sock.recv(1024)
                 if __msg: 
-                    _recv_buffer += __msg
+                    _recv_buffer = iadd(_recv_buffer, __msg)
                 else: break
         except (UnicodeDecodeError, error,\
                 ValueError, OSError, InterruptedError, Exception) as __err:
