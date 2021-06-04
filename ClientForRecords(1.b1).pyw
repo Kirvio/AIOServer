@@ -1,4 +1,4 @@
-from tkinter import Tk, messagebox, IntVar, Toplevel,\
+from tkinter import Tk, Variable, messagebox, IntVar, Toplevel,\
                     Checkbutton, ttk, Button, Entry, Label, StringVar,\
                     Menu, END, Frame, Scrollbar, RIGHT, CENTER,\
                     Y, X, YES, Radiobutton, BOTH, BOTTOM
@@ -491,19 +491,14 @@ class Root(Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.__confirm_exit)
 
-        Root.Date, Root.FIO, Root.address, Root.telephone,\
-        Root.reason, Root.information, Root.for_master,\
-        Root.master, Root.r_var, Root.Category, Root.RegDate =\
-                                                              StringVar(), StringVar(), StringVar(), StringVar(),\
-                                                              StringVar(), StringVar(), StringVar(), StringVar(),\
-                                                              StringVar(), StringVar(), StringVar()
+        self.__variables = [Root.Date, Root.FIO, Root.address, Root.telephone,\
+                            Root.reason, Root.information, Root.for_master,\
+                            Root.master, Root.r_var, Root.Category, Root.RegDate] = \
+                                                                                    StringVar(), StringVar(), StringVar(), StringVar(),\
+                                                                                    StringVar(), StringVar(), StringVar(), StringVar(),\
+                                                                                    StringVar(), StringVar(), StringVar()
         Root.r_var.set('Открыта')
-        
-        self.__variables =(Root.FIO.get(), Root.address.get(),\
-                           Root.telephone.get(), Root.reason.get(),\
-                           Root.information.get(), Root.for_master.get(),\
-                           Root.master.get(), Root.r_var.get(),\
-                           Root.Category.get())
+
         self.title(Authentication.FIO_employee)
 
         MyLeftPos = (self.winfo_screenwidth() - 1200) / 2
@@ -623,8 +618,8 @@ class Root(Tk):
                                     width=15, command=lambda: self.Search(ID=2))
 
         self.__update_button = Button(self, font=("Times New Roman", 12),\
-                                      fg="gray1", text="Обновить Запись",\
-                                      width=15, command=self.Update_record)
+                                      fg="gray1", text="Изменить Запись",\
+                                      width=15, command=self.Change_record)
 
         self.__clear_button = Button(self, font=("Times New Roman", 12),\
                                      fg="gray1", text="Очистить Поля Ввода", width=15,\
@@ -711,7 +706,9 @@ class Root(Tk):
         try:
             __now = datetime.now()
             __d_string = __now.strftime("%d-%m-%Y")
-            __variables = (*self.__variables, Authentication.FIO_employee, __d_string, Root.Date.get())
+            list_ = [i.get() for i in self.__variables]
+            __variables = (*list_[1:10], Authentication.FIO_employee, __d_string, list_[0])
+            print(__variables)
             __pattern = r'[A-Za-z]'
             __kek = [__z for __z in __variables if __z == ''\
                      or len(__z) > 100 or re.findall(__pattern, __z)]
@@ -728,7 +725,7 @@ class Root(Tk):
                     Root.isfull_label.configure(text="")
                     messagebox.showinfo("Data:", __ReceivedData)
 
-                    __list_for_table = [[__variables[11], *__variables[0:10]]]
+                    __list_for_table = [[__variables[11], *__variables[0:11]]]
                     Root.table.AddQuery(entry=__list_for_table)
             except (IndexError, Exception, TypeError) as exc:
                 messagebox.showinfo("Ошибка:", exc)
@@ -763,6 +760,12 @@ class Root(Tk):
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 
+    def Connect(self, adr, date):
+        __request = "^".join(("DELETE", adr, date))
+        __ReceivedData = Internet().IntoNetwork(data=__request)
+        messagebox.showinfo("Data:", __ReceivedData)
+        Root.table.DeleteQuery(adr=adr, regdate=date)
+
     def Delete_record(self):
         """Sending address of the client
            with keyword DELETE, wich triggers
@@ -774,11 +777,6 @@ class Root(Tk):
            вызывает запрос удалить
            в нашей БД на сервере
         """
-        def Connect(adr, date):
-            __request = "^".join(("DELETE", adr, date))
-            __ReceivedData = Internet().IntoNetwork(data=__request)
-            messagebox.showinfo("Data:", __ReceivedData)
-            Root.table.DeleteQuery(adr=adr, regdate=date)
 
         message = "Вы уверены, что хотите удалить заявку?"
         result = messagebox.askyesno(message=message, parent=self)
@@ -797,17 +795,17 @@ class Root(Tk):
                                    \nвы уверены что хотите удалить заявку?"
                         result = messagebox.askyesno(message=message, parent=self)
                         if result:
-                                Connect(__DADR, __RegDate)
+                                self.Connect(__DADR, __RegDate)
                         else:
                             pass
                     else:
-                        Connect(__DADR, __RegDate)
+                        self.Connect(__DADR, __RegDate)
                 except Exception as exc:
                     messagebox.showinfo("Ошибка:", exc)
         else:
             pass
 
-    def Update_record(self):
+    def Change_record(self):
         """Sending data from record
            to our server with keyword UPDATE
            wich triggers UPDATE command in our DB
@@ -819,8 +817,9 @@ class Root(Tk):
            и обновляет заявку с нужным адрессом
         """
         try:
-            __variables = (self.__variables, Root.Date.get())
-
+            list_ = [i.get() for i in self.__variables]
+            __variables = (*list_[1:], list_[0])
+            print(__variables)
             __pattern = r'[A-Za-z]'
             __kek = [__z for __z in __variables\
                      if __z == '' or len(__z) > 100 or re.findall(__pattern, __z)]
@@ -831,14 +830,15 @@ class Root(Tk):
                 if __kek:
                     messagebox.showinfo("Ошибка", "Ошибка в тексте!")
                 else:
-                    message = "Вы уверены, что хотите обновить заявку?"
+                    message = "Вы уверены, что хотите изменить заявку?"
                     result = messagebox.askyesno(message=message, parent=self)
                     if result:
                         __request = "^".join(("UPDATE", *__variables))
                         __ReceivedData = Internet().IntoNetwork(data=__request)
                         messagebox.showinfo("Data:", __ReceivedData)
 
-                        __gr_var = [[__variables[9], *__variables[0:8]]]
+                        __gr_var = [[__variables[9], *__variables[0:9], 'User', __variables[10]]]
+                        print(__gr_var)
                         Root.table.RenewQuery(trigger=__variables[0], entry=__gr_var)
                     else:
                         pass
