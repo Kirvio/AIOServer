@@ -1,4 +1,4 @@
-from tkinter import Tk, Variable, messagebox, IntVar, Toplevel,\
+from tkinter import Tk, messagebox, IntVar, Toplevel,\
                     Checkbutton, ttk, Button, Entry, Label, StringVar,\
                     Menu, END, Frame, Scrollbar, RIGHT, CENTER,\
                     Y, X, YES, Radiobutton, BOTH, BOTTOM
@@ -18,7 +18,7 @@ except ImportError:
 class Functions:
     """Main functions"""
 
-    def InsertInEntryes(self, entryes=tuple(), dell=int()):
+    def insert_in_entryes(self, entryes=tuple(), dell=int()):
         """Insenrting values in entryes
            if some values already there
            delete previous values and insert new
@@ -35,7 +35,7 @@ class Functions:
             messagebox.showinfo("Ошибка", err)
 
     @cache
-    def Sort(self, ReceivedData=tuple()):
+    def sorting_(self, ReceivedData=tuple()):
         """Sorting incoming messages
            Сортирует входящие сообщения
         """
@@ -48,7 +48,7 @@ class Functions:
         else:
             return __ReceivedMsg
 
-    def MainFN(self):
+    def main_function(self):
         """Function send query to server
            and returns todays records
            Функция посылает запрос на сервер
@@ -69,9 +69,9 @@ class Functions:
                     Functions.mainroot = Root()
                     Root.isfull_label.configure(text="На сегодня заявок нет")
                 else:
-                    __Sorted = self.Sort(ReceivedData=__Received)
+                    __sorted = self.sorting_(ReceivedData=__Received)
                     time.sleep(0.2)
-                    Functions.mainroot = Root(__Sorted)
+                    Functions.mainroot = Root(__sorted)
                     Root.isfull_label.configure(text="Заявки на сегодня:")
             except Exception as exc:
                 messagebox.showinfo("Ошибка:", exc)
@@ -112,8 +112,8 @@ class Table(Frame):
         __scrolltabley.pack(side=RIGHT, fill=Y)
         __scrolltablex.pack(side=BOTTOM, fill=X)
         self.__tree.pack(expand=YES, fill=BOTH)
-        self.__tree.bind("<Double-Button-1>", self.__OnEvents)
-        self.__tree.bind('<Return>', self.__OnEvents)
+        self.__tree.bind("<Double-Button-1>", self.__double_click)
+        self.__tree.bind('<Return>', self.__double_click)
 
     def __treeview_sort_column(self, tv, col, reverse):
         """Sorts table values by columns
@@ -132,7 +132,7 @@ class Table(Frame):
             messagebox.showinfo("Ошибка", err)
 
     @lru_cache(typed=True)
-    def __OnEvents(self, rt):
+    def __double_click(self, rt):
         """Insert data from line in the table
            into entryes for correction
            Вставляет данные из строки в таблице
@@ -149,7 +149,7 @@ class Table(Frame):
                     __data = self.__tree.item(__item)['values']
                     __data = list(map(str, __data))
                     __data_list = list(zip(__RT.entryes_tuple, __data[1:8]))
-                    Functions().InsertInEntryes(entryes=__data_list)
+                    Functions().insert_in_entryes(entryes=__data_list)
                     __RT.r_var.set(__data[8]), __RT.Category.set(__data[9]),\
                     __RT.Date.set(__data[0]), __RT.RegDate.set(__data[11])
                 else:
@@ -181,7 +181,7 @@ class Table(Frame):
                 workbook.close()
                 messagebox.showinfo("Внимание", "Экспортировано успешно")
 
-    def UpdateTable(self, rs=tuple()):
+    def update_table(self, rs=tuple()):
         """Delete data from table and
            insert new data
            Удалить данные с таблицы и
@@ -193,8 +193,8 @@ class Table(Frame):
         except TypeError as err:
             messagebox.showinfo("Error", err)
 
-    def SearchQuery(self, trigger=str()):
-        """Searching in the table for values
+    def search_query(self, trigger=str()):
+        """searching in the table for values
            that correspond to specified values
            Поиск в таблице значений, которые
            соответствуют указанным критериям
@@ -214,7 +214,7 @@ class Table(Frame):
         except TypeError as err:
             messagebox.showinfo("Error", err)
 
-    def RenewQuery(self, trigger=str(), entry=tuple()):
+    def change_record(self, trigger=str(), entry=tuple()):
         """Renew changed line
            Обновляет измененную строку
         """
@@ -227,7 +227,7 @@ class Table(Frame):
         except TypeError as err:
             messagebox.showinfo("Error", err)
 
-    def AddQuery(self, entry=tuple()):
+    def add_record(self, entry=tuple()):
         """Adds record to the table
            Добавляет строку в таблицу
         """
@@ -236,14 +236,14 @@ class Table(Frame):
         except TypeError as err:
             messagebox.showinfo("Error", err)
 
-    def DeleteQuery(self, adr, regdate):
+    def remove_record(self, adr, regdate):
         """Deleting record by address
            Удаляет заявку по адрессу
         """
         try:
             [self.__tree.delete(__child) for __child in self.__tree.get_children()\
              if adr in self.__tree.item(__child)['values'] and\
-                regdate in self.__tree.item(__child)['values']]
+             regdate in self.__tree.item(__child)['values']]
         except TypeError as err:
             messagebox.showinfo("Error", err)
 
@@ -253,9 +253,9 @@ class Registration(Toplevel):
     def __init__(self, Parent, data=tuple()):
         super().__init__(Parent)
 
-        Registration.ID, Registration.Login,\
-        Registration.Password, Registration.FIO_empl =\
-                                                      StringVar(), StringVar(), StringVar(), StringVar()
+        self.__variables = [Registration.ID, Registration.Login,\
+                            Registration.Password, Registration.FIO_empl] =\
+                                                                           StringVar(), StringVar(), StringVar(), StringVar()
         self.title("Администрирование:")
 
         MyLeftPos = (self.winfo_screenwidth() - 800) / 2
@@ -282,13 +282,13 @@ class Registration(Toplevel):
 
         self.__reg_button = Button(self, font=("Times New Roman", 12),\
                                    fg="gray1", text="Зарегистрировать",\
-                                   width=15, command=lambda: self.__NewUser())
+                                   width=15, command=lambda: self.__new_user())
         self.__del_button = Button(self, font=("Times New Roman", 12),\
                                    fg="gray1", text="Удалить по ID",\
-                                   width=15, command=lambda: self.__DeleteUser())
+                                   width=15, command=lambda: self.__delete_user())
 
-        Registration.table = Table(self,\
-                                   headings=('ID', 'Login', 'Password', 'FIO'), rows=data)
+        self.table = Table(self, \
+                                 headings=('ID', 'Login', 'Password', 'FIO'), rows=data)
 
         # Расположение полей ввода и т.д.
         # Place entryes on needed position etc, etc.
@@ -310,7 +310,7 @@ class Registration(Toplevel):
         self.__fio_reg_label.place(relwidth=0.06,\
                                    relheight=0.08, relx=0.11, rely=0.85)
 
-        Registration.table.place(relwidth=0.90,\
+        self.table.place(relwidth=0.90,\
                                  relheight=0.50, relx=0.05, rely=0.05)
 
         self.__reg_button.place(relwidth=0.20,\
@@ -324,29 +324,28 @@ class Registration(Toplevel):
 
         self['bg'] = "gray10"
 
-    def __NewUser(self):
+    def __new_user(self):
         try:
-            reg_tuple = (Registration.ID.get(), Registration.Login.get(),\
-                         Registration.Password.get(), Registration.FIO_empl.get())
-            check_ = [x for x in reg_tuple if x == ""]
+            list_ = [i.get() for i in self.__variables]
+            check_ = [x for x in list_ if x == ""]
             if check_:
                 messagebox.showinfo("Ошибка:", "Заполните все поля")
         except Exception:
             raise
         else:
             try:
-                __ToAuth = "^".join(("REGISTER", *reg_tuple))
+                __ToAuth = "^".join(("REGISTER", *list_))
                 __msg = Internet().IntoNetwork(data=__ToAuth)
             except Exception:
                 raise
             else:
                 if __msg == "Reg":
-                    add_user = (reg_tuple)
-                    Registration.table.AddQuery(entry=add_user)
+                    add_user = (list_)
+                    self.table.add_record(entry=add_user)
                 else:
                     pass
 
-    def __DeleteUser(self):
+    def __delete_user(self):
         try:
             id_ = Registration.ID.get()
             if id_ == "":
@@ -359,8 +358,8 @@ class Registration(Toplevel):
         else:
             if __msg == "OK":
                 __data = Internet().IntoNetwork(data="USERQUERY")
-                __sorted_data = Functions().Sort(ReceivedData=__data)
-                Registration.table.UpdateTable(rs=__sorted_data)
+                __sorted_data = Functions().sorting_(ReceivedData=__data)
+                self.table.update_table(rs=__sorted_data)
             else:
                 pass
 
@@ -371,9 +370,9 @@ class Authentication(Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.__close)
 
-        Authentication.__Login, Authentication.__Password,\
-        Authentication.FIO_employee = StringVar(), StringVar(), StringVar()
-        Authentication.__ent = IntVar()
+        Authentication.auth_list = [__Login, __Password,\
+                                    Authentication.FIO_employee] = StringVar(), StringVar(), StringVar()
+        self.__ent = IntVar()
 
         self.title("Авторизация:")
 
@@ -391,24 +390,24 @@ class Authentication(Tk):
 
         self.__login_entry = Entry(self,\
                                    font=("Times New Roman", 12), fg='gray1',\
-                                   textvariable=Authentication.__Login, width=40)
+                                   textvariable=__Login, width=40)
         self.__password_entry = Entry(self,\
                                       font=("Times New Roman", 12), fg='gray1',\
-                                      textvariable=Authentication.__Password, width=40, show="*")
+                                      textvariable=__Password, width=40, show="*")
 
         self.__entr_button = Button(self, font=("Times New Roman", 12),\
                                     fg="gray1", text="Войти", width=15,\
-                                    command=lambda: self.__MainWindow())
+                                    command=lambda: self.__main_window())
 
-        self.__entr_button.bind('<Return>', lambda x: self.__MainWindow())
-        self.__password_entry.bind('<Return>', lambda x: self.__MainWindow())
+        self.__entr_button.bind('<Return>', lambda x: self.__main_window())
+        self.__password_entry.bind('<Return>', lambda x: self.__main_window())
 
         self.__chkbtn = Checkbutton(self, activeforeground='White',\
                                     activebackground='gray10', bg="gray10",\
                                     font=("Times New Roman", 12), fg='White',\
                                     text="Показать пароль", selectcolor='gray10',\
-                                    variable=Authentication.__ent, onvalue=1, offvalue=0,\
-                                    command=lambda: self.__ShowPas())
+                                    variable=self.__ent, onvalue=1, offvalue=0,\
+                                    command=lambda: self.__show_pas())
 
         self.__entr_button.place(relwidth=0.30,\
                                  relheight=0.16, relx=0.10, rely=0.75)
@@ -433,16 +432,16 @@ class Authentication(Tk):
         except (OSError, Exception) as exc:
             messagebox.showinfo("Ошибка:", exc)
 
-    def __ShowPas(self):
+    def __show_pas(self):
         try:
-            if Authentication.__ent.get():
+            if self.__ent.get():
                 self.__password_entry.config(show="")
             else:
                 self.__password_entry.config(show="*")
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 
-    def __MainWindow(self):
+    def __main_window(self):
         """If Authentication is complete
            destroys Authentication window
            and calls Root
@@ -451,15 +450,15 @@ class Authentication(Tk):
            главное окно
         """
         try:
-            __TupleAuth = (Authentication.__Login.get(), Authentication.__Password.get())
-            __kek = [__x for __x in __TupleAuth if __x == '' or len(__x) > 30]
+            list_ = [i.get() for i in self.auth_list]
+            __kek = [__x for __x in list_[0:2] if __x == '' or len(__x) > 30]
             if __kek:
                 messagebox.showinfo("Ошибка", "Поля заполнены некорректно")
         except (UnboundLocalError, TypeError) as exc:
             messagebox.showinfo("Ошибка:", exc)
         else:
             try:
-                __ToAuth = "^".join(("ENTER", *__TupleAuth))
+                __ToAuth = "^".join(("ENTER", *list_[0:2]))
                 __msg = Internet().IntoNetwork(data=__ToAuth)
             except Exception as exc:
                 messagebox.showinfo("Ошибка", exc)
@@ -471,7 +470,7 @@ class Authentication(Tk):
                             Authentication.FIO_employee = __msg[1]
                             self.destroy()
                             time.sleep(0.5)
-                            Functions().MainFN()
+                            Functions().main_function()
                         elif __msg[0] == "NOLOG":
                             messagebox.showinfo("Ошибка", "Нет такого пользователя!")
                         elif __msg[0] == "Fail":
@@ -491,15 +490,15 @@ class Root(Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.__confirm_exit)
 
-        self.__variables = [Root.Date, Root.FIO, Root.address, Root.telephone,\
-                            Root.reason, Root.information, Root.for_master,\
-                            Root.master, Root.r_var, Root.Category, Root.RegDate] = \
+        self.__variables = [self.Date, self.FIO, self.address, self.telephone,\
+                            self.reason, self.information, self.for_master,\
+                            Root.master, Root.r_var, self.Category, self.RegDate] = \
                                                                                     StringVar(), StringVar(), StringVar(), StringVar(),\
                                                                                     StringVar(), StringVar(), StringVar(), StringVar(),\
                                                                                     StringVar(), StringVar(), StringVar()
         Root.r_var.set('Открыта')
-
-        self.title(Authentication.FIO_employee)
+        self.user = Authentication.FIO_employee
+        self.title(self.user)
 
         MyLeftPos = (self.winfo_screenwidth() - 1200) / 2
         myTopPos = (self.winfo_screenheight() - 600) / 2
@@ -513,32 +512,32 @@ class Root(Tk):
 
         self.FIO_entry = Entry(self, selectforeground='gray1',\
                                selectbackground='sky blue', font=("Times New Roman", 12),\
-                               textvariable=Root.FIO, width=18)
+                               textvariable=self.__variables[1], width=18)
         self.address_entry = Entry(self, selectforeground='gray1',\
                                    selectbackground='sky blue', font=("Times New Roman", 12),\
-                                   textvariable=Root.address, width=18)
+                                   textvariable=self.__variables[2], width=18)
         self.telephone_entry = Entry(self, selectforeground='gray1',\
                                      selectbackground='sky blue', font=("Times New Roman", 12),\
-                                     textvariable=Root.telephone, width=18)
+                                     textvariable=self.__variables[3], width=18)
         self.reason_entry = Entry(self, selectforeground='gray1',\
                                   selectbackground='sky blue', font=("Times New Roman", 12),\
-                                  textvariable=Root.reason, width=18)
+                                  textvariable=self.__variables[4], width=18)
         self.information_entry = Entry(self, selectforeground='gray1',\
                                        selectbackground='sky blue', font=("Times New Roman", 12),\
-                                       textvariable=Root.information, width=18)
+                                       textvariable=self.__variables[5], width=18)
         self.for_master_entry = Entry(self, selectforeground='gray1',\
                                       selectbackground='sky blue', font=("Times New Roman", 12),\
-                                      textvariable=Root.for_master, width=18)
+                                      textvariable=self.__variables[6], width=18)
         self.master_entry = Entry(self, selectforeground='gray1',\
                                   selectbackground='sky blue', font=("Times New Roman", 12),\
-                                  textvariable=Root.master, width=18)
-        Root.entryes_tuple = (self.FIO_entry, self.address_entry,\
+                                  textvariable=self.__variables[7], width=18)
+        self.entryes_tuple = (self.FIO_entry, self.address_entry,\
                               self.telephone_entry, self.reason_entry,\
                               self.information_entry, self.for_master_entry,\
                               self.master_entry)
 
         self.__monthchoosen = ttk.Combobox(self, font=("Times New Roman", 12),\
-                                           width=18, textvariable=Root.Category)
+                                           width=18, textvariable=self.__variables[9])
 
         self.__monthchoosen['values'] = ('Телевидение', 'Интернет', 'Пакет')
 
@@ -550,7 +549,7 @@ class Root(Tk):
         __k_str = ': '.join(('Сегодня', __d_string))
 
         self.__cal = DateEntry(self, font=("Times New Roman", 12),\
-                               textvariable=Root.Date, width=18,\
+                               textvariable=self.__variables[0], width=18,\
                                foreground='white', borderwidth=2,\
                                year=int(__y_string), date_pattern='dd.MM.yyyy')
 
@@ -607,46 +606,46 @@ class Root(Tk):
 
         self.__delete_button = Button(self, font=("Times New Roman", 12),\
                                       fg="gray1", text="Удалить Запись",\
-                                      width=15, command=self.Delete_record)
+                                      width=15, command=self.delete_record)
 
         self.__add_button = Button(self, font=("Times New Roman", 12),\
                                    fg="gray1", text="Добавить Запись",\
-                                   width=15, command=self.Insert_into)
+                                   width=15, command=self.insert_into)
 
         self.__srch_button = Button(self, font=("Times New Roman", 12),\
                                     fg="gray1", text="Поиск по дате",\
-                                    width=15, command=lambda: self.Search(ID=2))
+                                    width=15, command=lambda: self.search(ID=2))
 
         self.__update_button = Button(self, font=("Times New Roman", 12),\
                                       fg="gray1", text="Изменить Запись",\
-                                      width=15, command=self.Change_record)
+                                      width=15, command=self.change_record)
 
         self.__clear_button = Button(self, font=("Times New Roman", 12),\
                                      fg="gray1", text="Очистить Поля Ввода", width=15,\
-                                     command=lambda: Functions().InsertInEntryes(entryes=Root.entryes_tuple, dell=1))
+                                     command=lambda: Functions().insert_in_entryes(entryes=self.entryes_tuple, dell=1))
         root_tuple = (self.__category_label, self.__FIO_label,\
                       self.__address_label, self.__telephone_label,\
                       self.__reason_label, self.__information_label,\
                       self.__for_master_label, self.__master_label, self.__record_value_label,\
-                      self.__data_label, *Root.entryes_tuple, self.__r1,\
+                      self.__data_label, *self.entryes_tuple, self.__r1,\
                       self.__r2, self.__cal, self.__monthchoosen,\
                       self.__delete_button, self.__add_button, self.__srch_button,\
                       self.__update_button, self.__clear_button)
 
         self.__menu_visibility = True
         self.bind("<Control-Key-o>",\
-                                    lambda x: self.__HideMenu(widg= \
-                                                                    root_tuple if self.__menu_visibility else self.__ShowMenu()))
+                                    lambda x: self.hide_menu(widg= \
+                                                                    root_tuple if self.__menu_visibility else self.show_menu()))
 
         __m = Menu(self)
         __m_edit = Menu(__m, font=("Times New Roman", 11), tearoff=0)
         __m.add_cascade(menu=__m_edit, label="Меню")
         __m_edit.add_command(label="Скрыть меню",\
-                             command=lambda: self.__HideMenu(widg=root_tuple))
-        __m_edit.add_command(label="Показать меню", command=self.__ShowMenu)
+                             command=lambda: self.hide_menu(widg=root_tuple))
+        __m_edit.add_command(label="Показать меню", command=self.show_menu)
         __m_edit.add_separator()
         __m_edit.add_command(label="Экспорт в Excel",\
-                             command=lambda: Root.table.Export(heading=('Дата выполнения заявки', 'ФИО', 'Адрес', 'Телефон',\
+                             command=lambda: self.table.Export(heading=('Дата выполнения заявки', 'ФИО', 'Адрес', 'Телефон',\
                                                                         'Причина', 'Время выполнения', 'Для Мастера',\
                                                                         'Мастер', 'Состояние заявки', 'Категория',\
                                                                         'ФИО сотрудника', 'Дата регистрации')))
@@ -654,48 +653,48 @@ class Root(Tk):
         __m_search = Menu(__m, font=("Times New Roman", 11), tearoff=0)
         __m.add_cascade(menu=__m_search, label="Поиск")
         __m_search.add_command(label="По категории",\
-                               command=lambda: self.Search(ID=1))
+                               command=lambda: self.search(ID=1))
         __m_search.add_command(label="По дате",\
-                               command=lambda: self.Search(ID=2))
+                               command=lambda: self.search(ID=2))
         __m_search.add_command(label="По ФИО",\
-                               command=lambda: self.Search(ID=3))
+                               command=lambda: self.search(ID=3))
 
         __m_table = Menu(__m, font=("Times New Roman", 11), tearoff=0)
         __m.add_cascade(menu=__m_table, label="Таблица")
         __m_table.add_command(label="Все заявки/Обновить",\
-                              command=self.Query_all)
+                              command=self.query_all)
         __m_table.add_command(label="Добавить запись",\
-                              command=self.Insert_into)
+                              command=self.insert_into)
         __m.add_command(label="О программе")
         __m.add_command(label="Выйти", command=self.__confirm_exit)
         try:
-            if Authentication.FIO_employee == 'Андрющенко Егор Валерьевич' or\
-               Authentication.FIO_employee == 'Соболь Владислав Николаевич' or\
-               Authentication.FIO_employee == 'Кравцов Виктор Сергеевич':
-                __m.add_command(label="Администрирование", command=self.__RegWindow)
+            if self.user == 'Андрющенко Егор Валерьевич' or\
+               self.user == 'Соболь Владислав Николаевич' or\
+               self.user == 'Кравцов Виктор Сергеевич':
+                   __m.add_command(label="Администрирование", command=self.registration_window)
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 
         self.columnconfigure(1, weight=1)
         self['menu'] = __m
         self['bg'] = "gray10"
-        self.__ShowMenu()
+        self.show_menu()
 
-    def Query_all(self):
+    def query_all(self):
         """Queries all records from server
            Запрашивает все заявки с сервера
         """
         try:
             __Received = Internet().IntoNetwork(data="ALLQUERY")
-            __Sorted = Functions().Sort(ReceivedData=__Received)
-            Root.table.UpdateTable(rs=__Sorted)
-            Root.isfull_label.configure(text="Все заявки")
+            __Sorted = Functions().sorting_(ReceivedData=__Received)
+            self.table.update_table(rs=__Sorted)
+            self.isfull_label.configure(text="Все заявки")
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
         finally:
             messagebox.showinfo("Внимание", "Таблица успешно обновлена!")
 
-    def Insert_into(self):
+    def insert_into(self):
         """Sending records to server with
            keyword to trigger INSERT query
            in db on remote TCP server
@@ -707,8 +706,7 @@ class Root(Tk):
             __now = datetime.now()
             __d_string = __now.strftime("%d-%m-%Y")
             list_ = [i.get() for i in self.__variables]
-            __variables = (*list_[1:10], Authentication.FIO_employee, __d_string, list_[0])
-            print(__variables)
+            __variables = (*list_[1:10], self.user, __d_string, list_[0])
             __pattern = r'[A-Za-z]'
             __kek = [__z for __z in __variables if __z == ''\
                      or len(__z) > 100 or re.findall(__pattern, __z)]
@@ -721,17 +719,17 @@ class Root(Tk):
                 else:
                     __request = "^".join(("INSERT", *__variables))
 
-                    __ReceivedData = Internet().IntoNetwork(data=__request)
-                    Root.isfull_label.configure(text="")
-                    messagebox.showinfo("Data:", __ReceivedData)
+                    __received_data = Internet().IntoNetwork(data=__request)
+                    self.isfull_label.configure(text="")
+                    messagebox.showinfo("Data:", __received_data)
 
                     __list_for_table = [[__variables[11], *__variables[0:11]]]
-                    Root.table.AddQuery(entry=__list_for_table)
+                    self.table.add_record(entry=__list_for_table)
             except (IndexError, Exception, TypeError) as exc:
                 messagebox.showinfo("Ошибка:", exc)
 
-    def Search(self, ID=int()):
-        """Searching in our table for
+    def search(self, ID=int()):
+        """searching in our table for
            record, with parameters which
            correspond to the requested
            Ищем в нашей таблице запись,
@@ -740,33 +738,33 @@ class Root(Tk):
         try:
             __pattern = r'[A-Za-z]'
             if ID == 1:
-                __CAT = Root.Category.get()
+                __CAT = self.Category.get()
                 if __CAT == '' or re.findall(__pattern, __CAT):
                     messagebox.showinfo("Ошибка", "Заполните поле категории корректно!")
                 else:
-                    Root.table.SearchQuery(trigger=__CAT)
+                    self.table.search_query(trigger=__CAT)
             elif ID == 2:
-                __DATE = Root.Date.get()
+                __DATE = self.Date.get()
                 if __DATE == '' or re.findall(__pattern, __DATE):
                     messagebox.showinfo("Ошибка", "Выберите дату корректно!")
                 else:
-                    Root.table.SearchQuery(trigger=__DATE)
+                    self.table.search_query(trigger=__DATE)
             elif ID == 3:
-                __FIO = Root.FIO.get()
+                __FIO = self.FIO.get()
                 if __FIO == '' or re.findall(__pattern, __FIO):
                     messagebox.showinfo("Ошибка", "Заполните поле ФИО корректно!")
                 else:
-                    Root.table.SearchQuery(trigger=__FIO)
+                    self.table.search_query(trigger=__FIO)
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 
-    def Connect(self, adr, date):
+    def connect(self, adr, date):
         __request = "^".join(("DELETE", adr, date))
-        __ReceivedData = Internet().IntoNetwork(data=__request)
-        messagebox.showinfo("Data:", __ReceivedData)
-        Root.table.DeleteQuery(adr=adr, regdate=date)
+        __received_data = Internet().IntoNetwork(data=__request)
+        messagebox.showinfo("Data:", __received_data)
+        self.table.remove_record(adr=adr, regdate=date)
 
-    def Delete_record(self):
+    def delete_record(self):
         """Sending address of the client
            with keyword DELETE, wich triggers
            DELETE query in DB on our server
@@ -783,29 +781,29 @@ class Root(Tk):
         if result:
             try:
                 __pattern = r'[A-Za-z]'
-                __DADR, __RegDate = Root.address.get(), Root.RegDate.get()
+                __DADR, __RegDate = self.address.get(), self.RegDate.get()
             except (Exception, UnboundLocalError) as exc:
                 messagebox.showinfo("Ошибка:", exc)
             else:
                 try:
                     if __DADR == '' or re.findall(__pattern, __DADR):
                         messagebox.showinfo("Ошибка", "Заполните адресс корректно")
-                    elif Root.r_var.get() == "Открыта":
+                    elif self.r_var.get() == "Открыта":
                         message = "Заявка в открытом состоянии,\
                                    \nвы уверены что хотите удалить заявку?"
                         result = messagebox.askyesno(message=message, parent=self)
                         if result:
-                                self.Connect(__DADR, __RegDate)
+                                self.connect(__DADR, __RegDate)
                         else:
                             pass
                     else:
-                        self.Connect(__DADR, __RegDate)
+                        self.connect(__DADR, __RegDate)
                 except Exception as exc:
                     messagebox.showinfo("Ошибка:", exc)
         else:
             pass
 
-    def Change_record(self):
+    def change_record(self):
         """Sending data from record
            to our server with keyword UPDATE
            wich triggers UPDATE command in our DB
@@ -819,7 +817,6 @@ class Root(Tk):
         try:
             list_ = [i.get() for i in self.__variables]
             __variables = (*list_[1:], list_[0])
-            print(__variables)
             __pattern = r'[A-Za-z]'
             __kek = [__z for __z in __variables\
                      if __z == '' or len(__z) > 100 or re.findall(__pattern, __z)]
@@ -834,19 +831,18 @@ class Root(Tk):
                     result = messagebox.askyesno(message=message, parent=self)
                     if result:
                         __request = "^".join(("UPDATE", *__variables))
-                        __ReceivedData = Internet().IntoNetwork(data=__request)
-                        messagebox.showinfo("Data:", __ReceivedData)
+                        __received_data = Internet().IntoNetwork(data=__request)
+                        messagebox.showinfo("Data:", __received_data)
 
                         __gr_var = [[__variables[9], *__variables[0:9], 'User', __variables[10]]]
-                        print(__gr_var)
-                        Root.table.RenewQuery(trigger=__variables[0], entry=__gr_var)
+                        self.table.change_record(trigger=__variables[0], entry=__gr_var)
                     else:
                         pass
             except (Exception, IndexError) as exc:
                 messagebox.showinfo("Ошибка:", exc)
 
     # Функция вызова окна регистрации
-    def __RegWindow(self):
+    def registration_window(self):
         """Sending keyword USERQUERY to our server
            wich triggers QUERY ALL command
            in db on server from user table
@@ -856,7 +852,7 @@ class Root(Tk):
         """
         try:
             __RCVD = Internet().IntoNetwork(data="USERQUERY^")
-            __srt = Functions().Sort(ReceivedData=__RCVD)
+            __srt = Functions().sorting_(ReceivedData=__RCVD)
             Registration(self, __srt)
         except (Exception, UnboundLocalError) as exc:
             messagebox.showinfo("Ошибка:", exc)
@@ -886,7 +882,7 @@ class Root(Tk):
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 
-    def __HideMenu(self, widg=tuple()):
+    def hide_menu(self, widg=tuple()):
         """Hides our menu with place_forget
            and makes our table with records
            more visible
@@ -898,18 +894,18 @@ class Root(Tk):
             time.sleep(0.2)
             self.update_idletasks()
             [__i.place_forget() for __i in widg]
-            Root.table.place(relwidth=0.98,\
+            self.table.place(relwidth=0.98,\
                              relheight=0.90, relx=0.01, rely=0.05)
             self.__curdate.place(relwidth=0.13,\
                                  relheight=0.03, relx=0.01, rely=0.01)
-            Root.isfull_label.place(relwidth=0.15,\
+            self.isfull_label.place(relwidth=0.15,\
                                     relheight=0.03, relx=0.43, rely=0.01)
             time.sleep(0.2)
             self.__menu_visibility = False
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 
-    def __ShowMenu(self):
+    def show_menu(self):
         """Show hidden menu
            and putting table with
            records in it's place
@@ -939,7 +935,7 @@ class Root(Tk):
                                         relheight=0.03, relx=0.01, rely=0.57)
         self.__data_label.place(relwidth=0.15,\
                                 relheight=0.03, relx=0.01, rely=0.46)
-        Root.isfull_label.place(relwidth=0.15,\
+        self.isfull_label.place(relwidth=0.15,\
                                 relheight=0.03, relx=0.63, rely=0.01)
 
         self.FIO_entry.place(relwidth=0.18,\
@@ -962,7 +958,7 @@ class Root(Tk):
         self.__r2.place(relwidth=0.08,\
                         relheight=0.03, relx=0.28, rely=0.57)
 
-        Root.table.place(relwidth=0.60,\
+        self.table.place(relwidth=0.60,\
                          relheight=0.90, relx=0.38, rely=0.05)
         self.__monthchoosen.place(relwidth=0.18,\
                                   relheight=0.04, relx=0.18, rely=0.05)
@@ -989,9 +985,9 @@ class Root(Tk):
         # если имя пользователя соответствует имени админа
         # в меню добавляется панель администратора
         try:
-            if Authentication.FIO_employee == 'Андрющенко Егор Валерьевич' or\
-               Authentication.FIO_employee == 'Соболь Владислав Николаевич' or\
-               Authentication.FIO_employee == 'Кравцов Виктор Сергеевич':
+            if self.user == 'Андрющенко Егор Валерьевич' or\
+               self.user == 'Соболь Владислав Николаевич' or\
+               self.user == 'Кравцов Виктор Сергеевич':
                     self.__delete_button.place(relwidth=0.16,\
                                                relheight=0.05, relx=0.10, rely=0.75)
         except Exception as exc:
