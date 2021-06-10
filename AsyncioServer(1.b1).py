@@ -195,7 +195,7 @@ class MyServer:
                               reason = :reason, information = :information,\
                               for_master = :for_master, master = :master,\
                               record_value = :record_value, Category = :Category, RecDate = :RecDate\
-                              WHERE address = :address",
+                              WHERE address = :address AND RegDate = :RegDate",
                               {
                                 'FIO': SQLlist[1],
                                 'address': SQLlist[2],
@@ -206,7 +206,8 @@ class MyServer:
                                 'master': SQLlist[7],
                                 'record_value': SQLlist[8],
                                 'Category': SQLlist[9],
-                                'RecDate': SQLlist[10]
+                                'RegDate': SQLlist[10],
+                                'RecDate': SQLlist[11]
                               })
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
