@@ -6,6 +6,7 @@ from tkinter.filedialog import askopenfile
 from tkcalendar import DateEntry
 from xlsxwriter.workbook import Workbook
 from datetime import datetime
+from weakref import ref
 from functools import lru_cache
 import os
 import time
@@ -79,7 +80,8 @@ class Table(Frame):
            в поля ввода для корректировки
         """
         try:
-            __RT = Authentication.mainroot
+            __root_vars = ref(Authentication.mainroot)
+            __weak_ref_var = __root_vars()
             __item = self.__tree.focus()
         except (UnboundLocalError, TypeError) as exc:
             messagebox.showinfo("Ошибка:", exc)
@@ -88,10 +90,10 @@ class Table(Frame):
                 if __item:
                     __data = self.__tree.item(__item)['values']
                     __data = list(map(str, __data))
-                    __data_list = list(zip(__RT.entryes_tuple, __data[1:8]))
+                    __data_list = list(zip(__weak_ref_var.entryes_tuple, __data[1:8]))
                     Root.insert_in_entryes(entryes=__data_list)
-                    __RT.r_var.set(__data[8]), __RT.Category.set(__data[9]),\
-                    __RT.Date.set(__data[0]), __RT.RegDate.set(__data[11])
+                    __weak_ref_var.r_var.set(__data[8]), __weak_ref_var.Category.set(__data[9]),\
+                    __weak_ref_var.Date.set(__data[0]), __weak_ref_var.RegDate.set(__data[11])
                 else:
                     messagebox.showinfo("Внимание", "Выберите строку в таблице")
             except (Exception, IndexError,\
@@ -267,7 +269,8 @@ class Registration(Toplevel):
     def __new_user(self):
         try:
             list_ = [i.get() for i in self.__variables]
-            check_ = [x for x in list_ if x == ""]
+            check_ = [x for x in list_ \
+                        if x == ""]
             if check_:
                 messagebox.showinfo("Ошибка:", "Заполните все поля")
         except Exception:
@@ -710,9 +713,9 @@ class Root(Tk):
             __variables = (*list_[1:10], self.user, __d_string, list_[0])
             __pattern = r'[A-Za-z]'
             __kek = [__z for __z in __variables \
-                         if __z == ''\
-                         or len(__z) > 100 \
-                         or re.findall(__pattern, __z)]
+                         if __z == '' \
+                                      or len(__z) > 100 \
+                                      or re.findall(__pattern, __z)]
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
         else:
@@ -826,7 +829,8 @@ class Root(Tk):
             print(__variables)
             __pattern = r'[A-Za-z]'
             __kek = [__z for __z in __variables\
-                     if __z == '' or len(__z) > 100 or re.findall(__pattern, __z)]
+                         if __z == '' or len(__z) > 100 \
+                                      or re.findall(__pattern, __z)]
         except (TypeError, Exception, UnboundLocalError) as exc:
             messagebox.showinfo("Ошибка:", exc)
         else:

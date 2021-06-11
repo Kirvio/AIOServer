@@ -19,14 +19,15 @@ class Internet:
     def IntoNetwork(self, data, host='172.20.20.14', port=43333):
         try:
             # socket.create_connection returns link to socket object
-            with create_connection((host, port)) as self._sock:
-                __rst = self.ToConnect(data)
+            with create_connection((host, port)) as _sock:
+                _sock.settimeout(3)
+                __rst = self.ToConnect(_sock, data)
         except error as __err:
             messagebox.showinfo('Ошибка', __err)
         else:
             return __rst
 
-    def ToConnect(self, data):
+    def ToConnect(self, sock, data):
         """Function, that encrypts message before sending,
 
            and (receiving/decoding) HEADER from server
@@ -36,10 +37,10 @@ class Internet:
         try:
             _recv_buffer = b''
             __query = self.encrypt_message(data)
-            self._sock.sendall(__query)
-            self._sock.send(b'^\n')
+            sock.sendall(__query)
+            sock.send(b'^\n')
             while True:
-                __msg = self._sock.recv(1024)
+                __msg = sock.recv(1024)
                 if __msg: 
                     _recv_buffer = iadd(_recv_buffer, __msg)
                 else: break
