@@ -1,5 +1,4 @@
 import asyncio
-from datetime import time
 import sys
 from socket import AF_INET
 import logging
@@ -437,8 +436,8 @@ class MyServer:
                 else:
                     try:
                         client_writer.write(query)
-                    except (Exception, OSError, ConnectionError, RuntimeError,\
-                            asyncio.CancelledError, asyncio.InvalidStateError, asyncio.TimeoutError):
+                    except (OSError, Exception, ConnectionError,\
+                            asyncio.InvalidStateError, RuntimeError):
                         log.error("Exception occured", exc_info=True)
                         raise
                     else:
