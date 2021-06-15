@@ -3,7 +3,7 @@ __all__ = ()
 from bcrypt import checkpw, hashpw, gensalt
 from cryptography.fernet import Fernet as FN
 from functools import lru_cache
-import asyncio
+from asyncio import to_thread
 
 @lru_cache(typed=True)
 class AsyncioBlockingIO:
@@ -27,7 +27,7 @@ class AsyncioBlockingIO:
     # (good for cpu bound functions that release the GIL such as `bcrypt.checkpw`)
     def asyncify(func):
         async def inner(*args, **kwargs):
-            func_out = await asyncio.to_thread(func, *args, **kwargs)
+            func_out = await to_thread(func, *args, **kwargs)
             return func_out
         return inner
 

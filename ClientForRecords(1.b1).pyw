@@ -22,6 +22,7 @@ class Table(Frame):
     def __init__(self, Parent=None, headings=tuple(), rows=tuple()):
         super().__init__(Parent)
 
+        self.Parent = Parent
         __style = ttk.Style()
         __style.configure(".", font=('Times New Roman', 12), \
                                foreground="gray1")
@@ -90,10 +91,10 @@ class Table(Frame):
                 if __item:
                     __data = self.__tree.item(__item)['values']
                     __data = list(map(str, __data))
-                    __data_list = list(zip(__weak_ref_var.entryes_tuple, __data[1:8]))
+                    __data_list = list(zip(__weak_ref_var.entryes_tuple, __data[1:9]))
                     Root.insert_in_entryes(entryes=__data_list)
-                    __weak_ref_var.r_var.set(__data[8]), __weak_ref_var.Category.set(__data[9]),\
-                    __weak_ref_var.Date.set(__data[0]), __weak_ref_var.RegDate.set(__data[11])
+                    __weak_ref_var.r_var.set(__data[9]), __weak_ref_var.Category.set(__data[10]),\
+                    __weak_ref_var.Date.set(__data[0]), __weak_ref_var.RegDate.set(__data[12])
                 else:
                     messagebox.showinfo("Внимание", "Выберите строку в таблице")
             except (Exception, IndexError,\
@@ -462,11 +463,11 @@ class Root(Tk):
         self.protocol("WM_DELETE_WINDOW", self.__confirm_exit)
 
         self.__variables = [self.Date, self.FIO, self.address, self.telephone,\
-                            self.reason, self.information, self.for_master,\
+                            self.reason, self.tariff, self.information, self.for_master,\
                             Root.master, Root.r_var, self.Category, self.RegDate] = \
                                                                                     StringVar(), StringVar(), StringVar(), StringVar(),\
                                                                                     StringVar(), StringVar(), StringVar(), StringVar(),\
-                                                                                    StringVar(), StringVar(), StringVar()
+                                                                                    StringVar(), StringVar(), StringVar(), StringVar()
         Root.r_var.set('Открыта')
         self.user = Authentication.FIO_employee
         self.title(self.user)
@@ -477,7 +478,7 @@ class Root(Tk):
         self.geometry("%dx%d+%d+%d" % (1200, 600, MyLeftPos, myTopPos))
 
         Root.table = Table(self, headings=('Дата выполнения заявки', 'ФИО', 'Адрес',\
-                                           'Телефон', 'Причина', 'Время выполнения',\
+                                           'Телефон', 'Причина', 'Услуга', 'Время выполнения',\
                                            'Для Мастера', 'Мастер', 'Состояние заявки', 'Категория',\
                                            'ФИО сотрудника', 'Дата регистрации'), rows=data)
 
@@ -493,22 +494,25 @@ class Root(Tk):
         self.reason_entry = Entry(self, selectforeground='gray1',\
                                   selectbackground='sky blue', font=("Times New Roman", 12),\
                                   textvariable=self.__variables[4], width=18)
+        self.tariff_entry = Entry(self, selectforeground='gray1',\
+                                  selectbackground='sky blue', font=("Times New Roman", 12),\
+                                  textvariable=self.__variables[5], width=18)
         self.information_entry = Entry(self, selectforeground='gray1',\
                                        selectbackground='sky blue', font=("Times New Roman", 12),\
-                                       textvariable=self.__variables[5], width=18)
+                                       textvariable=self.__variables[6], width=18)
         self.for_master_entry = Entry(self, selectforeground='gray1',\
                                       selectbackground='sky blue', font=("Times New Roman", 12),\
-                                      textvariable=self.__variables[6], width=18)
+                                      textvariable=self.__variables[7], width=18)
         self.master_entry = Entry(self, selectforeground='gray1',\
                                   selectbackground='sky blue', font=("Times New Roman", 12),\
-                                  textvariable=self.__variables[7], width=18)
+                                  textvariable=self.__variables[8], width=18)
         self.entryes_tuple = (self.FIO_entry, self.address_entry,\
                               self.telephone_entry, self.reason_entry,\
-                              self.information_entry, self.for_master_entry,\
-                              self.master_entry)
+                              self.tariff_entry, self.information_entry,\
+                              self.for_master_entry, self.master_entry)
 
         self.__monthchoosen = ttk.Combobox(self, font=("Times New Roman", 12),\
-                                           width=18, textvariable=self.__variables[9])
+                                           width=18, textvariable=self.__variables[10])
 
         self.__monthchoosen['values'] = ('Телевидение', 'Интернет', 'Пакет')
 
@@ -539,6 +543,9 @@ class Root(Tk):
         self.__reason_label = Label(self, bg="gray10", \
                                     fg="white", font=("Times New Roman", 12),\
                                     text="Введите причину:")
+        self.__tariff_label = Label(self, bg="gray10", \
+                                    fg="white", font=("Times New Roman", 12),\
+                                    text="Введите название услуги:")
         self.__information_label = Label(self, bg="gray10", \
                                          fg="white", font=("Times New Roman", 12),\
                                          text="Время выполнения заявки:")
@@ -596,12 +603,13 @@ class Root(Tk):
                                      command=lambda: self.insert_in_entryes(entryes=self.entryes_tuple, dell=1))
         root_tuple = (self.__category_label, self.__FIO_label,\
                       self.__address_label, self.__telephone_label,\
-                      self.__reason_label, self.__information_label,\
-                      self.__for_master_label, self.__master_label, self.__record_value_label,\
+                      self.__reason_label, self.tariff_entry,\
+                      self.__information_label, self.__for_master_label,\
+                      self.__master_label, self.__record_value_label,\
                       self.__data_label, *self.entryes_tuple, self.__r1,\
                       self.__r2, self.__cal, self.__monthchoosen,\
                       self.__delete_button, self.__add_button, self.__srch_button,\
-                      self.__update_button, self.__clear_button)
+                      self.__update_button, self.__clear_button, self.__tariff_label)
 
         self.__menu_visibility = True
         self.bind("<Control-Key-o>",\
@@ -710,7 +718,8 @@ class Root(Tk):
             __now = datetime.now()
             __d_string = __now.strftime("%d-%m-%Y")
             list_ = [i.get() for i in self.__variables]
-            __variables = (*list_[1:10], self.user, __d_string, list_[0])
+            __variables = (*list_[1:5], *list_[6:11], self.user, \
+                           __d_string, list_[0], list_[5])
             __pattern = r'[A-Za-z]'
             __kek = [__z for __z in __variables \
                          if __z == '' \
@@ -731,8 +740,8 @@ class Root(Tk):
                         __received_data = Internet().IntoNetwork(data=__request)
                         self.isfull_label.configure(text="")
                         messagebox.showinfo("Data:", __received_data)
-
-                        __list_for_table = [[__variables[11], *__variables[0:11]]]
+                        __list_for_table = [[__variables[11], *__variables[0:4], \
+                                             __variables[12], *__variables[4:11]]]
                         self.table.add_record(entry=__list_for_table)
             except (IndexError, Exception, TypeError) as exc:
                 messagebox.showinfo("Ошибка:", exc)
@@ -825,7 +834,7 @@ class Root(Tk):
         """
         try:
             list_ = [i.get() for i in self.__variables]
-            __variables = (*list_[1:], list_[0])
+            __variables = (*list_[1:5], *list_[6:12], list_[0], list_[5])
             print(__variables)
             __pattern = r'[A-Za-z]'
             __kek = [__z for __z in __variables\
@@ -840,12 +849,14 @@ class Root(Tk):
                 else:
                     message = "Вы уверены, что хотите изменить заявку?"
                     result = messagebox.askyesno(message=message, parent=self)
+                    __gr_var = [[__variables[10], *__variables[0:4], __variables[11],\
+                                 *__variables[4:9], 'User', __variables[9]]]
+                    print(__gr_var)
                     if result:
                         __request = "^".join(("UPDATE", *__variables))
                         __received_data = Internet().IntoNetwork(data=__request)
                         messagebox.showinfo("Data:", __received_data)
 
-                        __gr_var = [[__variables[9], *__variables[0:9], 'User', __variables[10]]]
                         self.table.change_record(trigger=__variables[0], entry=__gr_var)
                     else:
                         pass
@@ -936,16 +947,18 @@ class Root(Tk):
                                      relheight=0.03, relx=0.01, rely=0.20)
         self.__reason_label.place(relwidth=0.15,\
                                   relheight=0.03, relx=0.01, rely=0.25)
+        self.__tariff_label.place(relwidth=0.15,\
+                                  relheight=0.03, relx=0.01, rely=0.30)
         self.__information_label.place(relwidth=0.15,\
-                                       relheight=0.03, relx=0.01, rely=0.30)
+                                       relheight=0.03, relx=0.01, rely=0.35)
         self.__for_master_label.place(relwidth=0.15,\
-                                      relheight=0.03, relx=0.01, rely=0.35)
+                                      relheight=0.03, relx=0.01, rely=0.40)
         self.__master_label.place(relwidth=0.15,\
-                                  relheight=0.03, relx=0.01, rely=0.40)
+                                  relheight=0.03, relx=0.01, rely=0.45)
         self.__record_value_label.place(relwidth=0.15,\
-                                        relheight=0.03, relx=0.01, rely=0.57)
+                                        relheight=0.03, relx=0.01, rely=0.61)
         self.__data_label.place(relwidth=0.15,\
-                                relheight=0.03, relx=0.01, rely=0.46)
+                                relheight=0.03, relx=0.01, rely=0.52)
         self.isfull_label.place(relwidth=0.15,\
                                 relheight=0.03, relx=0.63, rely=0.01)
 
@@ -957,31 +970,33 @@ class Root(Tk):
                                    relheight=0.04, relx=0.18, rely=0.20)
         self.reason_entry.place(relwidth=0.18,\
                                 relheight=0.04, relx=0.18, rely=0.25)
+        self.tariff_entry.place(relwidth=0.18,\
+                                relheight=0.04, relx=0.18, rely=0.30)
         self.information_entry.place(relwidth=0.18,\
-                                     relheight=0.04, relx=0.18, rely=0.30)
+                                     relheight=0.04, relx=0.18, rely=0.35)
         self.for_master_entry.place(relwidth=0.18,\
-                                    relheight=0.04, relx=0.18, rely=0.35)
+                                    relheight=0.04, relx=0.18, rely=0.40)
         self.master_entry.place(relwidth=0.18,\
-                                relheight=0.04, relx=0.18, rely=0.40)
+                                relheight=0.04, relx=0.18, rely=0.45)
 
         self.__r1.place(relwidth=0.08,\
-                        relheight=0.03, relx=0.18, rely=0.57)
+                        relheight=0.03, relx=0.18, rely=0.61)
         self.__r2.place(relwidth=0.08,\
-                        relheight=0.03, relx=0.28, rely=0.57)
+                        relheight=0.03, relx=0.28, rely=0.61)
 
         self.table.place(relwidth=0.60,\
                          relheight=0.90, relx=0.38, rely=0.05)
         self.__monthchoosen.place(relwidth=0.18,\
                                   relheight=0.04, relx=0.18, rely=0.05)
         self.__cal.place(relwidth=0.18,\
-                         relheight=0.05, relx=0.18, rely=0.45)
+                         relheight=0.05, relx=0.18, rely=0.51)
 
         self.__add_button.place(relwidth=0.16,\
-                                relheight=0.05, relx=0.01, rely=0.65)
+                                relheight=0.05, relx=0.01, rely=0.70)
         self.__srch_button.place(relwidth=0.16,\
                                  relheight=0.05, relx=0.01, rely=0.90)
         self.__update_button.place(relwidth=0.16,\
-                                   relheight=0.05, relx=0.20, rely=0.65)
+                                   relheight=0.05, relx=0.20, rely=0.70)
         self.__clear_button.place(relwidth=0.16,\
                                   relheight=0.05, relx=0.20, rely=0.90)
 
@@ -1000,7 +1015,7 @@ class Root(Tk):
                self.user == 'Соболь Владислав Николаевич' or\
                self.user == 'Кравцов Виктор Сергеевич':
                     self.__delete_button.place(relwidth=0.16,\
-                                               relheight=0.05, relx=0.10, rely=0.75)
+                                               relheight=0.05, relx=0.10, rely=0.80)
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 
