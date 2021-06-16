@@ -47,6 +47,7 @@ class Internet:
         except (UnicodeDecodeError, error,\
                 ValueError, OSError, InterruptedError, Exception) as __err:
             messagebox.showinfo("Ошибка", __err)
+            sock.close()
         else:
             __ready = self.decrypt_message(_recv_buffer)
             if __ready: return __ready
