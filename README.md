@@ -21,4 +21,6 @@ The purpose of this project is to better manage requests from clients to call th
     create key for encryption/decryption with Fernet(Fernet.generate_key()) and put it into file
     write path to your key file in path variables(__key_path)
     and write your own host='172.20.20.14', port=43333 in AsyncioServer and Encrypt module
-  this is basically it, hf
+  This is basically it, hf
+  
+  Instruction for russian users, is in Instruction folder
