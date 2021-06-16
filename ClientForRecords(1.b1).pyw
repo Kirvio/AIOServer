@@ -2,7 +2,7 @@ from tkinter import Tk, messagebox, IntVar, Toplevel,\
                     Checkbutton, ttk, Button, Entry, Label, StringVar,\
                     Menu, END, Frame, Scrollbar, RIGHT, CENTER,\
                     Y, X, YES, Radiobutton, BOTH, BOTTOM
-from tkinter.filedialog import Directory, askopenfile
+from tkinter.filedialog import askopenfile
 from tkcalendar import DateEntry
 from xlsxwriter.workbook import Workbook
 from datetime import datetime
@@ -19,10 +19,10 @@ except ImportError:
 class Table(Frame):
     """Table for records"""
 
-    def __init__(self, Parent=None, headings=tuple(), rows=tuple()):
+    def __init__(self, Parent=None, headings=tuple(), rows=tuple(), counter=0):
         super().__init__(Parent)
 
-        self.Parent = Parent
+        self.counter = counter
         __style = ttk.Style()
         __style.configure(".", font=('Times New Roman', 12), \
                                foreground="gray1")
@@ -81,25 +81,37 @@ class Table(Frame):
            в поля ввода для корректировки
         """
         try:
-            __root_vars = ref(Authentication.mainroot)
-            __weak_ref_var = __root_vars()
             __item = self.__tree.focus()
         except (UnboundLocalError, TypeError) as exc:
             messagebox.showinfo("Ошибка:", exc)
         else:
-            try:
-                if __item:
-                    __data = self.__tree.item(__item)['values']
-                    __data = list(map(str, __data))
-                    __data_list = list(zip(__weak_ref_var.entryes_tuple, __data[1:9]))
-                    Root.insert_in_entryes(entryes=__data_list)
-                    __weak_ref_var.r_var.set(__data[9]), __weak_ref_var.Category.set(__data[10]),\
-                    __weak_ref_var.Date.set(__data[0]), __weak_ref_var.RegDate.set(__data[12])
+            if __item:
+                if self.counter == 1:
+                    try:
+                        __reg_vars = ref(Root.reg_window)
+                        __weak_ref_var = __reg_vars()
+                        __data = self.__tree.item(__item)['values']
+                        __data = list(map(str, __data))
+                        __data_list = list(zip(__weak_ref_var.reg_entryes_tuple, __data))
+                        Root.insert_in_entryes(entryes=__data_list)
+                    except (Exception, IndexError,\
+                            UnboundLocalError, TypeError) as exc:
+                        messagebox.showinfo("Ошибка:", exc)
                 else:
-                    messagebox.showinfo("Внимание", "Выберите строку в таблице")
-            except (Exception, IndexError,\
-                    UnboundLocalError, TypeError) as exc:
-                messagebox.showinfo("Ошибка:", exc)
+                    try:
+                        __root_vars = ref(Authentication.mainroot)
+                        __weak_ref_var = __root_vars()
+                        __data = self.__tree.item(__item)['values']
+                        __data = list(map(str, __data))
+                        __data_list = list(zip(__weak_ref_var.entryes_tuple, __data[1:9]))
+                        Root.insert_in_entryes(entryes=__data_list)
+                        __weak_ref_var.r_var.set(__data[9]), __weak_ref_var.Category.set(__data[10]),\
+                        __weak_ref_var.Date.set(__data[0]), __weak_ref_var.RegDate.set(__data[12])
+                    except (Exception, IndexError,\
+                            UnboundLocalError, TypeError) as exc:
+                        messagebox.showinfo("Ошибка:", exc)
+            else:
+                messagebox.showinfo("Внимание", "Выберите строку в таблице")
 
     def Export(self, heading=tuple()):
         """Export data from table in excel
@@ -222,6 +234,8 @@ class Registration(Toplevel):
                                           textvariable=self.Password, width=40)
         self.__fio_reg_entry = Entry(self,\
                                      textvariable=self.FIO_empl, width=40)
+        self.reg_entryes_tuple = (self.__id_entry, self.__login_reg_entry, \
+                                  self.__password_reg_entry, self.__fio_reg_entry)
 
         self.__reg_button = Button(self, font=("Times New Roman", 12),\
                                    fg="gray1", text="Зарегистрировать",\
@@ -231,7 +245,7 @@ class Registration(Toplevel):
                                    width=15, command=lambda: self.__delete_user())
 
         self.table = Table(self, \
-                                 headings=('ID', 'Login', 'Password', 'FIO'), rows=data)
+                                 headings=('ID', 'Login', 'Password', 'FIO'), rows=data, counter=1)
 
         # Расположение полей ввода и т.д.
         # Place entryes on needed position etc, etc.
@@ -879,7 +893,7 @@ class Root(Tk):
         try:
             __RCVD = Internet().IntoNetwork(data="USERQUERY^")
             __srt = self.sorting_(ReceivedData=__RCVD)
-            Registration(self, __srt)
+            Root.reg_window = Registration(self, __srt)
         except (Exception, UnboundLocalError) as exc:
             messagebox.showinfo("Ошибка:", exc)
 
