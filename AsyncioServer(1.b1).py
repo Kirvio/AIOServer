@@ -2,7 +2,7 @@ import asyncio
 import sys
 from socket import AF_INET
 import logging
-from weakref import WeakValueDictionary
+from weakref import WeakKeyDictionary
 from itertools import chain, product
 try:
     from aiosqlite import connect, DatabaseError
@@ -25,7 +25,7 @@ class MyServer:
         # Enables logs inside class
 
         # this keep tracking all client tasks inside
-        self.clients = WeakValueDictionary()
+        self.clients = WeakKeyDictionary()
 
     async def iterate_(self, data):
         try:
@@ -318,7 +318,7 @@ class MyServer:
             raise
         else:
             try:
-                self.clients[handle_task] = client_reader
+                self.clients[handle_task] = client_reader, client_writer
                 done, pending = await asyncio.shield(\
                                       asyncio.wait({handle_task}))
             except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
