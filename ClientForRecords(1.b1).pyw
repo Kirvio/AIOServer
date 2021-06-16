@@ -2,7 +2,7 @@ from tkinter import Tk, messagebox, IntVar, Toplevel,\
                     Checkbutton, ttk, Button, Entry, Label, StringVar,\
                     Menu, END, Frame, Scrollbar, RIGHT, CENTER,\
                     Y, X, YES, Radiobutton, BOTH, BOTTOM
-from tkinter.filedialog import askopenfile
+from tkinter.filedialog import Directory, askopenfile
 from tkcalendar import DateEntry
 from xlsxwriter.workbook import Workbook
 from datetime import datetime
@@ -645,7 +645,7 @@ class Root(Tk):
                               command=self.query_all)
         __m_table.add_command(label="Добавить запись",\
                               command=self.insert_into)
-        __m.add_command(label="О программе")
+        __m.add_command(label="О программе", command=self.instruction)
         __m.add_command(label="Выйти", command=self.__confirm_exit)
         try:
             if self.user == 'Андрющенко Егор Валерьевич' or\
@@ -691,6 +691,10 @@ class Root(Tk):
             messagebox.showinfo("Ошибка", err)
         else:
             return __ReceivedMsg
+
+    def instruction(self):
+        share_dir = r'\\172.20.20.3\share\3. Документы\Инструкция(Заявки)\index.html'
+        os.startfile(share_dir)
 
     def query_all(self):
         """Queries all records from server

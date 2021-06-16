@@ -1,0 +1,295 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ru" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Описание программы &mdash; документация Records 1.0</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/translations.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Алфавитный указатель" href="genindex.html" />
+    <link rel="search" title="Поиск" href="search.html" />
+    <link rel="next" title="Гайд для пользователей" href="userguide.html" />
+    <link rel="prev" title="ПО Заявки" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Records
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Описание программы</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide.html">Гайд для пользователей</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Как установить</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support.html">Техническая поддержка</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Records</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Описание программы</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/description.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="id1">
+<h1>Описание программы<a class="headerlink" href="#id1" title="Ссылка на этот заголовок">¶</a></h1>
+<div class="line-block">
+<div class="line">Эта программа используется для управления потоком заявок на вызов мастера от пользователей.</div>
+<div class="line">Программа клиент-серверная, что значит без сервера она работать не будет.</div>
+<div class="line">В качестве клиента используется <strong>GUI Tkinter</strong>, в качестве сервера <strong>asyncio tcp-server</strong>.</div>
+</div>
+<div class="line-block">
+<div class="line">Описание функционала главного окна:</div>
+<div class="line">Слева находится поля для ввода с описанием, справа сама таблица с заявками.</div>
+</div>
+<div class="line-block">
+<div class="line">В верхнем левом углу главного окна появляется ФИО текущего пользователя.</div>
+</div>
+<div class="line-block">
+<div class="line">В верху окна есть меню, которое состоит из пунктов:</div>
+</div>
+<ul class="simple">
+<li><p><strong>Меню</strong></p></li>
+<li><p><strong>Поиск</strong></p></li>
+<li><p><strong>Таблица</strong></p></li>
+<li><p><strong>О программе</strong></p></li>
+<li><p><strong>Выйти</strong></p></li>
+<li><p><strong>Администрирование(для администраторов)</strong></p></li>
+</ul>
+<div class="line-block">
+<div class="line">Меню:</div>
+</div>
+<ul class="simple">
+<li><p><strong>Скрыть меню</strong> (что-бы скрыть поля для ввода)</p></li>
+<li><p><strong>Показать меню</strong> (вернуть все в обратное состояние)</p></li>
+<li><p><strong>Экспорт в Excel</strong> (экспорт данных из таблицы для отчета)</p></li>
+</ul>
+<div class="line-block">
+<div class="line">Поиск:</div>
+</div>
+<ul class="simple">
+<li><p><strong>По категории</strong> (для поиска данных в таблице по выбранной категории)</p></li>
+<li><p><strong>По дате</strong> (для поиска по выбранной дате)</p></li>
+<li><p><strong>По ФИО</strong> (для поиска по ФИО абонента(ФИО должно быть введено полностью))</p></li>
+</ul>
+<div class="line-block">
+<div class="line">Таблица:</div>
+</div>
+<ul class="simple">
+<li><p><strong>Все заявки/Обновить</strong> (для просмотра всех заявок из БД в таблице)</p></li>
+<li><p><strong>Добавить запись</strong> (выполняет ту же функцию, что и кнопка <strong>Добавить запись</strong>)</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><strong>О программе</strong> (содержит ссылку на инструкцию по работе с программой)</div>
+</div>
+<div class="line-block">
+<div class="line">Кнопки:</div>
+</div>
+<ul class="simple">
+<li><p><strong>Добавить запись</strong></p></li>
+<li><p><strong>Изменить запись</strong></p></li>
+<li><p><strong>Удалить запись</strong></p></li>
+<li><p><strong>Поиск по дате</strong></p></li>
+<li><p><strong>Очистить поля ввода</strong></p></li>
+</ul>
+<div class="line-block">
+<div class="line">Сама таблица содержит поля с информацией, соответствующей названию поля:</div>
+</div>
+<ul class="simple">
+<li><p><strong>Дата выполнения заявки</strong></p></li>
+<li><p><strong>ФИО</strong></p></li>
+<li><p><strong>Адрес</strong></p></li>
+<li><p><strong>Телефон</strong></p></li>
+<li><p><strong>Причина</strong></p></li>
+<li><p><strong>Услуга</strong></p></li>
+<li><p><strong>Время выполнения</strong></p></li>
+<li><p><strong>Для Мастера</strong></p></li>
+<li><p><strong>Мастер</strong></p></li>
+<li><p><strong>Состояние заявки</strong></p></li>
+<li><p><strong>Категория</strong></p></li>
+<li><p><strong>ФИО сотрудника</strong></p></li>
+<li><p><strong>Дата регистрации</strong></p></li>
+</ul>
+<div class="line-block">
+<div class="line"><strong>Выйти</strong> - выйти с программы</div>
+</div>
+<div class="line-block">
+<div class="line"><strong>Администрирование</strong> - открывает окно администрирования пользователей программы для администраторов</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="userguide.html" class="btn btn-neutral float-right" title="Гайд для пользователей" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="ПО Заявки" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Egor Andrushenko.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

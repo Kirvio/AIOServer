@@ -2,7 +2,7 @@ import asyncio
 import sys
 from socket import AF_INET
 import logging
-from weakref import WeakValueDictionary
+from weakref import WeakKeyDictionary
 from itertools import chain, product
 try:
     from aiosqlite import connect, DatabaseError
@@ -25,7 +25,7 @@ class MyServer:
         # Enables logs inside class
 
         # this keep tracking all client tasks inside
-        self.clients = WeakValueDictionary()
+        self.clients = WeakKeyDictionary()
 
     async def iterate_(self, data):
         try:
@@ -96,7 +96,8 @@ class MyServer:
     async def allquery(self, db):
         try:
             cursor = await db.execute("SELECT RecDate, FIO, address,\
-                                       telephone, reason, information, for_master, master, record_value,\
+                                       telephone, reason, Tariff, information,\
+                                       for_master, master, record_value,\
                                        Category, FIO_employee, RegDate FROM records")
             cursor = await cursor.fetchall()
 
@@ -126,9 +127,10 @@ class MyServer:
     async def curquery(self, db, SQLlist):
         try:
             cursor = await db.execute("SELECT RecDate, FIO, address, telephone,\
-                                       reason, information, for_master, master, record_value, Category,\
+                                       reason, Tariff, information,\
+                                       for_master, master, record_value, Category,\
                                        FIO_employee, RegDate FROM records WHERE RecDate = :RecDate",\
-                                       {'RecDate': SQLlist[1]})
+                                       {'RecDate': SQLlist[1]})           
             cursor = await cursor.fetchall()
 
             if cursor == []:
@@ -148,10 +150,10 @@ class MyServer:
         try:
             await db.execute("INSERT INTO records (FIO, address, telephone, reason,\
                               information, for_master, master, record_value, Category,\
-                              FIO_employee, RegDate, RecDate)\
+                              FIO_employee, RegDate, RecDate, Tariff)\
                               VALUES (:FIO, :address, :telephone, :reason, :information,\
                               :for_master, :master, :record_value, :Category, :FIO_employee,\
-                              :RegDate, :RecDate)",
+                              :RegDate, :RecDate, :Tariff)",\
                               {
                                 'FIO': SQLlist[1],
                                 'address': SQLlist[2],
@@ -164,7 +166,8 @@ class MyServer:
                                 'Category': SQLlist[9],
                                 'FIO_employee': SQLlist[10],
                                 'RegDate': SQLlist[11],
-                                'RecDate': SQLlist[12]
+                                'RecDate': SQLlist[12],
+                                'Tariff': SQLlist[13]
                               })
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
@@ -179,7 +182,8 @@ class MyServer:
         try:
             await db.execute("DELETE FROM records\
                               WHERE address = :address AND\
-                              RegDate = :RegDate", {'address': SQLlist[1], 'RegDate': SQLlist[2]})
+                              RegDate = :RegDate",\
+                              {'address': SQLlist[1], 'RegDate': SQLlist[2]})
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
             log.error("Exception occurred", exc_info=True)
@@ -193,9 +197,10 @@ class MyServer:
         try:
             await db.execute("UPDATE records\
                               SET FIO = :FIO, address = :address, telephone = :telephone,\
-                              reason = :reason, information = :information,\
-                              for_master = :for_master, master = :master,\
-                              record_value = :record_value, Category = :Category, RecDate = :RecDate\
+                              reason = :reason, information = :information, \
+                              for_master = :for_master, master = :master, \
+                              record_value = :record_value, Category = :Category,\
+                              RecDate = :RecDate, Tariff = :Tariff\
                               WHERE address = :address AND RegDate = :RegDate",
                               {
                                 'FIO': SQLlist[1],
@@ -208,7 +213,8 @@ class MyServer:
                                 'record_value': SQLlist[8],
                                 'Category': SQLlist[9],
                                 'RegDate': SQLlist[10],
-                                'RecDate': SQLlist[11]
+                                'RecDate': SQLlist[11],
+                                'Tariff': SQLlist[12]
                               })
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
@@ -318,7 +324,7 @@ class MyServer:
             raise
         else:
             try:
-                self.clients[handle_task] = client_reader
+                self.clients[handle_task] = client_reader, client_writer
                 done, pending = await asyncio.shield(\
                                       asyncio.wait({handle_task}))
             except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
@@ -435,7 +441,7 @@ class MyServer:
                     raise
                 else:
                     try:
-                        client_writer.write(query)
+                       client_writer.write(query)
                     except (OSError, Exception, ConnectionError,\
                             asyncio.InvalidStateError, RuntimeError):
                         log.error("Exception occured", exc_info=True)
