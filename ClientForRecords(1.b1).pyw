@@ -33,7 +33,7 @@ class Table(Frame):
                                    foreground=[('selected', 'gray1')])
 
         self.__tree = ttk.Treeview(self, style='my.Treeview',\
-                                   show="headings", selectmode="browse")
+                                         show="headings", selectmode="browse")
 
         self.__tree["columns"] = headings
         self.__tree["displaycolumns"] = headings
@@ -42,7 +42,7 @@ class Table(Frame):
                                       anchor=CENTER, command=lambda __lhead=__head :\
                                       self.__treeview_sort_column(self.__tree, __lhead, False)),\
           self.__tree.column(__head, anchor=CENTER, width=240))\
-          for __head in headings]
+                                     for __head in headings]
 
         [self.__tree.insert('', END, values=__row) for __row in rows]
 
@@ -69,7 +69,7 @@ class Table(Frame):
             [tv.move(k, '', index) for index, (val, k) in enumerate(l)]
 
             tv.heading(col,\
-                       command=lambda: self.__treeview_sort_column(tv, col, not reverse))
+                           command=lambda: self.__treeview_sort_column(tv, col, not reverse))
         except (TypeError, AttributeError) as err:
             messagebox.showinfo("Ошибка", err)
 
@@ -124,7 +124,7 @@ class Table(Frame):
                 worksheet = workbook.add_worksheet()
                 [worksheet.write(0, col_n, data) for col_n, data in enumerate(heading)]
                 __data = [self.__tree.item(__child)['values']\
-                          for __child in self.__tree.get_children()]
+                                                             for __child in self.__tree.get_children()]
 
                 for row_num, row_data in enumerate(__data):
                     for col_num, col_data in enumerate(row_data):
@@ -219,30 +219,35 @@ class Registration(Toplevel):
         self.geometry( "%dx%d+%d+%d" % (800, 300, MyLeftPos, myTopPos))
 
         self.__id_label = Label(self, bg="gray10", fg="white",\
-                                font=("Times New Roman", 12), text="ID:")
+                                      font=("Times New Roman", 12), text="ID:")
         self.__login_reg_label = Label(self, bg="gray10", fg="white",\
-                                       font=("Times New Roman", 12), text="Логин:")
+                                             font=("Times New Roman", 12), text="Логин:")
         self.__password_reg_label = Label(self, bg="gray10", fg="white",\
-                                          font=("Times New Roman", 12), text="Пароль:")
+                                                font=("Times New Roman", 12), text="Пароль:")
         self.__fio_reg_label = Label(self, bg="gray10", fg="white",\
-                                     font=("Times New Roman", 12), text="ФИО:")
+                                           font=("Times New Roman", 12), text="ФИО:")
 
-        self.__id_entry = Entry(self, textvariable=self.ID, width=40)
-        self.__login_reg_entry = Entry(self,\
-                                       textvariable=self.Login, width=40)
-        self.__password_reg_entry = Entry(self,\
-                                          textvariable=self.Password, width=40)
-        self.__fio_reg_entry = Entry(self,\
-                                     textvariable=self.FIO_empl, width=40)
+        self.__id_entry = Entry(self, font=("Times New Roman", 12), fg='gray1',\
+                                      selectforeground='gray1', selectbackground='sky blue',\
+                                      textvariable=self.ID, width=40)
+        self.__login_reg_entry = Entry(self, font=("Times New Roman", 12), fg='gray1',\
+                                             selectforeground='gray1', selectbackground='sky blue',\
+                                             textvariable=self.Login, width=40)
+        self.__password_reg_entry = Entry(self, font=("Times New Roman", 12), fg='gray1',\
+                                                selectforeground='gray1', selectbackground='sky blue',\
+                                                textvariable=self.Password, width=40)
+        self.__fio_reg_entry = Entry(self, font=("Times New Roman", 12), fg='gray1',\
+                                           selectforeground='gray1', selectbackground='sky blue',\
+                                           textvariable=self.FIO_empl, width=40)
         self.reg_entryes_tuple = (self.__id_entry, self.__login_reg_entry, \
                                   self.__password_reg_entry, self.__fio_reg_entry)
 
         self.__reg_button = Button(self, font=("Times New Roman", 12),\
-                                   fg="gray1", text="Зарегистрировать",\
-                                   width=15, command=lambda: self.__new_user())
+                                         fg="gray1", text="Зарегистрировать",\
+                                         width=15, command=lambda: self.__new_user())
         self.__del_button = Button(self, font=("Times New Roman", 12),\
-                                   fg="gray1", text="Удалить по ID",\
-                                   width=15, command=lambda: self.__delete_user())
+                                         fg="gray1", text="Удалить по ID",\
+                                         width=15, command=lambda: self.__delete_user())
 
         self.table = Table(self, \
                                  headings=('ID', 'Login', 'Password', 'FIO'), rows=data, counter=1)
@@ -268,7 +273,7 @@ class Registration(Toplevel):
                                    relheight=0.08, relx=0.11, rely=0.85)
 
         self.table.place(relwidth=0.90,\
-                                 relheight=0.50, relx=0.05, rely=0.05)
+                         relheight=0.50, relx=0.05, rely=0.05)
 
         self.__reg_button.place(relwidth=0.20,\
                                 relheight=0.10, relx=0.65, rely=0.85)
@@ -287,7 +292,7 @@ class Registration(Toplevel):
             check_ = [x for x in list_ \
                         if x == ""]
             if check_:
-                messagebox.showinfo("Ошибка:", "Заполните все поля")
+                messagebox.showinfo("Ошибка:", "Заполните все поля", parent=self)
         except Exception:
             raise
         else:
@@ -301,13 +306,13 @@ class Registration(Toplevel):
                     add_user = (list_)
                     self.table.add_record(entry=add_user)
                 else:
-                    pass
+                    messagebox.showinfo('Ошибка', 'Пользователь не добавлен', parent=self)
 
     def __delete_user(self):
         try:
             id_ = self.ID.get()
             if id_ == "":
-                messagebox.showinfo("Ошибка", "Введите ID пользователя")
+                messagebox.showinfo("Ошибка", "Введите ID пользователя", parent=self)
             else:
                 __ToDel = "^".join(("DELETEUSER", id_))
                 __msg = Internet().IntoNetwork(data=__ToDel)
@@ -319,7 +324,7 @@ class Registration(Toplevel):
                 __sorted_data = Root.sorting_(ReceivedData=__data)
                 self.table.update_table(rs=__sorted_data)
             else:
-                pass
+                messagebox.showinfo('Ошибка', 'Пользователь не удален', parent=self)
 
 class Authentication(Tk):
 
@@ -340,32 +345,32 @@ class Authentication(Tk):
         self.geometry("%dx%d+%d+%d" % (400, 200, MyLeftPos, myTopPos))
 
         self.__login_label = Label(self, bg="gray10",\
-                                   fg="white", font=("Times New Roman", 12),\
-                                   text="Введите Логин:")
+                                         fg="white", font=("Times New Roman", 12),\
+                                         text="Введите Логин:")
         self.__password_label = Label(self, bg="gray10",\
-                                      fg="white", font=("Times New Roman", 12),\
-                                      text="Введите пароль:")
+                                            fg="white", font=("Times New Roman", 12),\
+                                            text="Введите пароль:")
 
-        self.__login_entry = Entry(self,\
-                                   font=("Times New Roman", 12), fg='gray1',\
-                                   textvariable=__Login, width=40)
-        self.__password_entry = Entry(self,\
-                                      font=("Times New Roman", 12), fg='gray1',\
-                                      textvariable=__Password, width=40, show="*")
+        self.__login_entry = Entry(self, selectforeground='gray1', selectbackground='sky blue',\
+                                         font=("Times New Roman", 12), fg='gray1',\
+                                         textvariable=__Login, width=40)
+        self.__password_entry = Entry(self, selectforeground='gray1', selectbackground='sky blue',\
+                                            font=("Times New Roman", 12), fg='gray1',\
+                                            textvariable=__Password, width=40, show="*")
 
         self.__entr_button = Button(self, font=("Times New Roman", 12),\
-                                    fg="gray1", text="Войти", width=15,\
-                                    command=lambda: self.__main_window())
+                                          fg="gray1", text="Войти", width=15,\
+                                          command=lambda: self.__main_window())
 
         self.__entr_button.bind('<Return>', lambda x: self.__main_window())
         self.__password_entry.bind('<Return>', lambda x: self.__main_window())
 
         self.__chkbtn = Checkbutton(self, activeforeground='White',\
-                                    activebackground='gray10', bg="gray10",\
-                                    font=("Times New Roman", 12), fg='White',\
-                                    text="Показать пароль", selectcolor='gray10',\
-                                    variable=self.__ent, onvalue=1, offvalue=0,\
-                                    command=lambda: self.__show_pas())
+                                          activebackground='gray10', bg="gray10",\
+                                          font=("Times New Roman", 12), fg='White',\
+                                          text="Показать пароль", selectcolor='gray10',\
+                                          variable=self.__ent, onvalue=1, offvalue=0,\
+                                          command=lambda: self.__show_pas())
 
         self.__entr_button.place(relwidth=0.30,\
                                  relheight=0.16, relx=0.10, rely=0.75)
@@ -409,7 +414,8 @@ class Authentication(Tk):
         """
         try:
             list_ = [i.get() for i in self.auth_list]
-            __kek = [__x for __x in list_[0:2] if __x == '' or len(__x) > 30]
+            __kek = [__x for __x in list_[0:2] \
+                         if __x == '' or len(__x) > 30]
             if __kek:
                 messagebox.showinfo("Ошибка", "Поля заполнены некорректно")
         except (UnboundLocalError, TypeError) as exc:
@@ -497,36 +503,36 @@ class Root(Tk):
                                            'ФИО сотрудника', 'Дата регистрации'), rows=data)
 
         self.FIO_entry = Entry(self, selectforeground='gray1',\
-                               selectbackground='sky blue', font=("Times New Roman", 12),\
-                               textvariable=self.__variables[1], width=18)
-        self.address_entry = Entry(self, selectforeground='gray1',\
-                                   selectbackground='sky blue', font=("Times New Roman", 12),\
-                                   textvariable=self.__variables[2], width=18)
-        self.telephone_entry = Entry(self, selectforeground='gray1',\
                                      selectbackground='sky blue', font=("Times New Roman", 12),\
-                                     textvariable=self.__variables[3], width=18)
+                                     textvariable=self.__variables[1], width=18)
+        self.address_entry = Entry(self, selectforeground='gray1',\
+                                         selectbackground='sky blue', font=("Times New Roman", 12),\
+                                         textvariable=self.__variables[2], width=18)
+        self.telephone_entry = Entry(self, selectforeground='gray1',\
+                                           selectbackground='sky blue', font=("Times New Roman", 12),\
+                                           textvariable=self.__variables[3], width=18)
         self.reason_entry = Entry(self, selectforeground='gray1',\
-                                  selectbackground='sky blue', font=("Times New Roman", 12),\
-                                  textvariable=self.__variables[4], width=18)
+                                        selectbackground='sky blue', font=("Times New Roman", 12),\
+                                        textvariable=self.__variables[4], width=18)
         self.tariff_entry = Entry(self, selectforeground='gray1',\
-                                  selectbackground='sky blue', font=("Times New Roman", 12),\
-                                  textvariable=self.__variables[5], width=18)
+                                        selectbackground='sky blue', font=("Times New Roman", 12),\
+                                        textvariable=self.__variables[5], width=18)
         self.information_entry = Entry(self, selectforeground='gray1',\
-                                       selectbackground='sky blue', font=("Times New Roman", 12),\
-                                       textvariable=self.__variables[6], width=18)
+                                             selectbackground='sky blue', font=("Times New Roman", 12),\
+                                             textvariable=self.__variables[6], width=18)
         self.for_master_entry = Entry(self, selectforeground='gray1',\
-                                      selectbackground='sky blue', font=("Times New Roman", 12),\
-                                      textvariable=self.__variables[7], width=18)
+                                            selectbackground='sky blue', font=("Times New Roman", 12),\
+                                            textvariable=self.__variables[7], width=18)
         self.master_entry = Entry(self, selectforeground='gray1',\
-                                  selectbackground='sky blue', font=("Times New Roman", 12),\
-                                  textvariable=self.__variables[8], width=18)
+                                        selectbackground='sky blue', font=("Times New Roman", 12),\
+                                        textvariable=self.__variables[8], width=18)
         self.entryes_tuple = (self.FIO_entry, self.address_entry,\
                               self.telephone_entry, self.reason_entry,\
                               self.tariff_entry, self.information_entry,\
                               self.for_master_entry, self.master_entry)
 
         self.__monthchoosen = ttk.Combobox(self, font=("Times New Roman", 12),\
-                                           width=18, textvariable=self.__variables[10])
+                                                 width=18, textvariable=self.__variables[10])
 
         self.__monthchoosen['values'] = ('Телевидение', 'Интернет', 'Пакет')
 
@@ -538,83 +544,83 @@ class Root(Tk):
         __k_str = ': '.join(('Сегодня', __d_string))
 
         self.__cal = DateEntry(self, font=("Times New Roman", 12),\
-                               textvariable=self.__variables[0], width=18,\
-                               foreground='white', borderwidth=2,\
-                               year=int(__y_string), date_pattern='dd.MM.yyyy')
+                                     textvariable=self.__variables[0], width=18,\
+                                     foreground='white', borderwidth=2,\
+                                     year=int(__y_string), date_pattern='dd.MM.yyyy')
 
         self.__category_label = Label(self, bg="gray10",\
-                                      fg="white", font=("Times New Roman", 12),\
-                                      text="Выберите категорию:")
+                                            fg="white", font=("Times New Roman", 12),\
+                                            text="Выберите категорию:")
         self.__FIO_label = Label(self, bg="gray10",\
-                                 fg="white", font=("Times New Roman", 12),\
-                                 text="Введите ФИО:")
-        self.__address_label = Label(self, bg="gray10", \
-                                     fg="white", font=("Times New Roman", 12),\
-                                     text="Введите адресс:")
-        self.__telephone_label = Label(self, bg="gray10", \
                                        fg="white", font=("Times New Roman", 12),\
-                                       text="Введите телефон:")
+                                       text="Введите ФИО:")
+        self.__address_label = Label(self, bg="gray10", \
+                                           fg="white", font=("Times New Roman", 12),\
+                                           text="Введите адресс:")
+        self.__telephone_label = Label(self, bg="gray10", \
+                                             fg="white", font=("Times New Roman", 12),\
+                                             text="Введите телефон:")
         self.__reason_label = Label(self, bg="gray10", \
-                                    fg="white", font=("Times New Roman", 12),\
-                                    text="Введите причину:")
-        self.__tariff_label = Label(self, bg="gray10", \
-                                    fg="white", font=("Times New Roman", 12),\
-                                    text="Введите название услуги:")
-        self.__information_label = Label(self, bg="gray10", \
-                                         fg="white", font=("Times New Roman", 12),\
-                                         text="Время выполнения заявки:")
-        self.__for_master_label = Label(self, bg="gray10",\
-                                        fg="white", font=("Times New Roman", 12),\
-                                        text="Пометка для мастера:")
-        self.__master_label = Label(self, bg="gray10",\
-                                    fg="white", font=("Times New Roman", 12), \
-                                    text="Выполняет мастер:") 
-        self.__record_value_label = Label(self, bg="gray10",\
                                           fg="white", font=("Times New Roman", 12),\
-                                          text="Информация по заявке:")
+                                          text="Введите причину:")
+        self.__tariff_label = Label(self, bg="gray10", \
+                                          fg="white", font=("Times New Roman", 12),\
+                                          text="Введите название услуги:")
+        self.__information_label = Label(self, bg="gray10", \
+                                               fg="white", font=("Times New Roman", 12),\
+                                               text="Время выполнения заявки:")
+        self.__for_master_label = Label(self, bg="gray10",\
+                                              fg="white", font=("Times New Roman", 12),\
+                                              text="Пометка для мастера:")
+        self.__master_label = Label(self, bg="gray10",\
+                                          fg="white", font=("Times New Roman", 12), \
+                                          text="Выполняет мастер:") 
+        self.__record_value_label = Label(self, bg="gray10",\
+                                                fg="white", font=("Times New Roman", 12),\
+                                                text="Информация по заявке:")
         self.__data_label = Label(self, bg="gray10",\
-                                  fg="white", font=("Times New Roman", 12),\
-                                  text="Выберите дату:")
+                                        fg="white", font=("Times New Roman", 12),\
+                                        text="Выберите дату:")
         self.__clock = Label(self, bg="gray10",\
-                             fg="white", font=("Times New Roman", 12))
+                                   fg="white", font=("Times New Roman", 12))
         self.__curdate = Label(self, bg="gray10",\
-                               fg="white", font=("Times New Roman", 12), text=__k_str)
+                                     fg="white", font=("Times New Roman", 12), text=__k_str)
         Root.isfull_label = Label(self, bg="gray10",\
-                                  fg="white", font=("Times New Roman", 12))
+                                        fg="white", font=("Times New Roman", 12))
 
         self.__tick()
 
         self.__r1 = Radiobutton(self, activeforeground='White',\
-                                activebackground='gray10', bg="gray10",\
-                                font=("Times New Roman", 12), fg='White',\
-                                text='Открыта', selectcolor='gray10',\
-                                variable=self.r_var, value='Открыта')
+                                      activebackground='gray10', bg="gray10",\
+                                      font=("Times New Roman", 12), fg='White',\
+                                      text='Открыта', selectcolor='gray10',\
+                                      variable=self.r_var, value='Открыта')
 
         self.__r2 = Radiobutton(self, activeforeground='White',\
-                                activebackground='gray10', bg="gray10",\
-                                font=("Times New Roman", 12), fg='White',\
-                                text='Закрыта', selectcolor='gray10',\
-                                variable=self.r_var, value='Закрыта')
+                                      activebackground='gray10', bg="gray10",\
+                                      font=("Times New Roman", 12), fg='White',\
+                                      text='Закрыта', selectcolor='gray10',\
+                                      variable=self.r_var, value='Закрыта')
 
         self.__delete_button = Button(self, font=("Times New Roman", 12),\
-                                      fg="gray1", text="Удалить Запись",\
-                                      width=15, command=self.delete_record)
+                                            fg="gray1", text="Удалить Запись",\
+                                            width=15, command=self.delete_record)
 
         self.__add_button = Button(self, font=("Times New Roman", 12),\
-                                   fg="gray1", text="Добавить Запись",\
-                                   width=15, command=self.insert_into)
+                                         fg="gray1", text="Добавить Запись",\
+                                         width=15, command=self.insert_into)
 
         self.__srch_button = Button(self, font=("Times New Roman", 12),\
-                                    fg="gray1", text="Поиск по дате",\
-                                    width=15, command=lambda: self.search(ID=2))
+                                          fg="gray1", text="Поиск по дате",\
+                                          width=15, command=lambda: self.search(ID=2))
 
         self.__update_button = Button(self, font=("Times New Roman", 12),\
-                                      fg="gray1", text="Изменить Запись",\
-                                      width=15, command=self.change_record)
+                                            fg="gray1", text="Изменить Запись",\
+                                            width=15, command=self.change_record)
 
         self.__clear_button = Button(self, font=("Times New Roman", 12),\
-                                     fg="gray1", text="Очистить Поля Ввода", width=15,\
-                                     command=lambda: self.insert_in_entryes(entryes=self.entryes_tuple, dell=1))
+                                           fg="gray1", text="Очистить Поля Ввода", width=15,\
+                                           command=lambda: self.insert_in_entryes(entryes=self.entryes_tuple, dell=1))
         root_tuple = (self.__category_label, self.__FIO_label,\
                       self.__address_label, self.__telephone_label,\
                       self.__reason_label, self.tariff_entry,\
@@ -707,6 +713,9 @@ class Root(Tk):
             return __ReceivedMsg
 
     def instruction(self):
+        """This function purpose is to open file
+           on local share(Instruction)
+        """
         share_dir = r'\\172.20.20.3\share\3. Документы\Инструкция(Заявки)\index.html'
         os.startfile(share_dir)
 
