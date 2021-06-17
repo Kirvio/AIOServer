@@ -16,8 +16,11 @@ try:
 except ImportError:
     raise
 
+""" Application for managment
+    in CRUD(create, read, update, delete) style
+"""
+
 class Table(Frame):
-    """Table for records"""
 
     def __init__(self, Parent=None, headings=tuple(), rows=tuple(), counter=0):
         super().__init__(Parent)
