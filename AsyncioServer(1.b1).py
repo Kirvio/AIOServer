@@ -40,14 +40,18 @@ class MyServer:
 
     async def enter(self, db, SQLlist):
         try:
-            cursor = await db.execute("SELECT Password FROM Cipher WHERE Login = :Login",
+            cursor = await db.execute("SELECT Password \
+                                       FROM Cipher \
+                                       WHERE Login = :Login",
                                       {'Login': SQLlist[1]})
             cursor = await cursor.fetchone()
             if cursor:
                 check_ = (await asyncio.wait_for(\
-                                                 AsyncioBlockingIO().check_pass(SQLlist[2], cursor[0]), timeout=5.0))
+                                                 AsyncioBlockingIO().check_pass(SQLlist[2], cursor[0]), timeout=2.0))
                 if check_:
-                    cursor = await db.execute("SELECT employee_FIO FROM Cipher WHERE Login = :Login",
+                    cursor = await db.execute("SELECT employee_FIO \
+                                               FROM Cipher \
+                                               WHERE Login = :Login",
                                                {'Login': SQLlist[1]})
                     cursor = await cursor.fetchone()
                     log.info(f"Сотрудник {SQLlist[1]} авторизировался")
@@ -67,10 +71,11 @@ class MyServer:
     async def register(self, db, SQLlist):
         try:
             new_hash = (await asyncio.wait_for(\
-                                               AsyncioBlockingIO().to_hash_password(SQLlist[3]), timeout=5.0))
+                                               AsyncioBlockingIO().to_hash_password(SQLlist[3]), timeout=2.0))
             await db.execute("INSERT INTO Cipher (ID, Login, Password, employee_FIO)\
                               VALUES (:ID, :Login, :Password, :employee_FIO)",
-                              {'ID': SQLlist[1], 'Login': SQLlist[2], 'Password': new_hash, 'employee_FIO': SQLlist[4]})
+                              {'ID': SQLlist[1], 'Login': SQLlist[2],
+                               'Password': new_hash, 'employee_FIO': SQLlist[4]})
             await db.commit()
 
             log.info(f"Сотрудник {SQLlist[4]} зарегистрирован")
@@ -79,6 +84,25 @@ class MyServer:
             raise
         else:
             msg = 'Reg'
+            return msg
+
+    async def changeuser(self, db, SQLlist):
+        try:
+            new_hash = (await asyncio.wait_for(\
+                                               AsyncioBlockingIO().to_hash_password(SQLlist[3]), timeout=2.0))
+            await db.execute("UPDATE Cipher \
+                              SET Login = :Login, Password = :Password,\
+                                  employee_FIO = :employee_FIO \
+                              WHERE ID = :ID",
+                              {'ID': SQLlist[1], 'Login': SQLlist[2],
+                               'Password': new_hash, 'employee_FIO': SQLlist[4]})
+            await db.commit()
+        except (OSError, DatabaseError):
+            log.error("Exception occured", exc_info=True)
+            raise
+        else:
+            log.info(f"Сотрудник {SQLlist[2]} изменён")
+            msg = "OK"
             return msg
 
     async def deleteuser(self, db, SQLlist):
@@ -96,9 +120,10 @@ class MyServer:
     async def allquery(self, db):
         try:
             cursor = await db.execute("SELECT RecDate, FIO, address,\
-                                       telephone, reason, Tariff, information,\
-                                       for_master, master, record_value,\
-                                       Category, FIO_employee, RegDate FROM records")
+                                              telephone, reason, Tariff, information,\
+                                              for_master, master, record_value,\
+                                              Category, FIO_employee, RegDate \
+                                       FROM records")
             cursor = await cursor.fetchall()
 
             cursor = await self.iterate_(cursor)
@@ -112,8 +137,9 @@ class MyServer:
 
     async def userquery(self, db):
         try:
-            cursor = await db.execute("SELECT ID, Login, Password,\
-                                       employee_FIO FROM Cipher")
+            cursor = await db.execute("SELECT ID, Login,\
+                                              Password, employee_FIO \
+                                       FROM Cipher")
             cursor = await cursor.fetchall()
             cursor = await self.iterate_(cursor)
 
@@ -127,9 +153,11 @@ class MyServer:
     async def curquery(self, db, SQLlist):
         try:
             cursor = await db.execute("SELECT RecDate, FIO, address, telephone,\
-                                       reason, Tariff, information,\
-                                       for_master, master, record_value, Category,\
-                                       FIO_employee, RegDate FROM records WHERE RecDate = :RecDate",\
+                                              reason, Tariff, information,\
+                                              for_master, master, record_value, Category,\
+                                              FIO_employee, RegDate \
+                                       FROM records \
+                                       WHERE RecDate = :RecDate",
                                        {'RecDate': SQLlist[1]})           
             cursor = await cursor.fetchall()
 
@@ -149,11 +177,11 @@ class MyServer:
     async def insert(self, db, SQLlist):
         try:
             await db.execute("INSERT INTO records (FIO, address, telephone, reason,\
-                              information, for_master, master, record_value, Category,\
-                              FIO_employee, RegDate, RecDate, Tariff)\
+                                                   information, for_master, master, record_value, Category,\
+                                                   FIO_employee, RegDate, RecDate, Tariff)\
                               VALUES (:FIO, :address, :telephone, :reason, :information,\
-                              :for_master, :master, :record_value, :Category, :FIO_employee,\
-                              :RegDate, :RecDate, :Tariff)",\
+                                      :for_master, :master, :record_value, :Category, :FIO_employee,\
+                                      :RegDate, :RecDate, :Tariff)",\
                               {
                                 'FIO': SQLlist[1],
                                 'address': SQLlist[2],
@@ -182,7 +210,7 @@ class MyServer:
         try:
             await db.execute("DELETE FROM records\
                               WHERE address = :address AND\
-                              RegDate = :RegDate",\
+                                    RegDate = :RegDate",
                               {'address': SQLlist[1], 'RegDate': SQLlist[2]})
             await db.commit()
         except (OSError, IndexError, Exception, DatabaseError):
@@ -197,10 +225,10 @@ class MyServer:
         try:
             await db.execute("UPDATE records\
                               SET FIO = :FIO, address = :address, telephone = :telephone,\
-                              reason = :reason, information = :information, \
-                              for_master = :for_master, master = :master, \
-                              record_value = :record_value, Category = :Category,\
-                              RecDate = :RecDate, Tariff = :Tariff\
+                                  reason = :reason, information = :information,\
+                                  for_master = :for_master, master = :master,\
+                                  record_value = :record_value, Category = :Category,\
+                                  RecDate = :RecDate, Tariff = :Tariff\
                               WHERE address = :address AND RegDate = :RegDate",
                               {
                                 'FIO': SQLlist[1],
@@ -286,6 +314,11 @@ class MyServer:
                                         asyncio.wait_for(\
                                                          self.update(db, SQLlist), timeout=5.0))
                         return update_
+                    elif keyword == "CHANGEUSER":
+                        update_user = await asyncio.shield(\
+                                            asyncio.wait_for(\
+                                                            self.changeuser(db, SQLlist), timeout=2.0))
+                        return update_user
                     else:
                         log.info("Поступил неправильный запрос")
                         wrong_query = "Неправильный запрос"
