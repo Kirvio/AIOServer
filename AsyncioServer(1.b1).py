@@ -5,7 +5,8 @@ import logging
 from weakref import WeakKeyDictionary
 from itertools import chain, product
 try:
-    from aiosqlite import connect, DatabaseError
+    from aiosqlite import connect, DatabaseError, ProgrammingError,\
+                          OperationalError, NotSupportedError
     from AIOEncryption import AsyncioBlockingIO
 except ImportError:
     raise
@@ -62,7 +63,7 @@ class MyServer:
             else:
                 cursor = "NOLOG"
 
-        except (OSError, IndexError, Exception, DatabaseError):
+        except (IndexError, OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -74,12 +75,12 @@ class MyServer:
                                                AsyncioBlockingIO().to_hash_password(SQLlist[3]), timeout=2.0))
             await db.execute("INSERT INTO Cipher (ID, Login, Password, employee_FIO)\
                               VALUES (:ID, :Login, :Password, :employee_FIO)",
-                              {'ID': SQLlist[1], 'Login': SQLlist[2],
-                               'Password': new_hash, 'employee_FIO': SQLlist[4]})
+                            {'ID': SQLlist[1], 'Login': SQLlist[2],
+                             'Password': new_hash, 'employee_FIO': SQLlist[4]})
             await db.commit()
 
             log.info(f"Сотрудник {SQLlist[4]} зарегистрирован")
-        except (OSError, IndexError, Exception, DatabaseError):
+        except (IndexError, OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -94,10 +95,10 @@ class MyServer:
                               SET Login = :Login, Password = :Password,\
                                   employee_FIO = :employee_FIO \
                               WHERE ID = :ID",
-                              {'ID': SQLlist[1], 'Login': SQLlist[2],
-                               'Password': new_hash, 'employee_FIO': SQLlist[4]})
+                            {'ID': SQLlist[1], 'Login': SQLlist[2],
+                             'Password': new_hash, 'employee_FIO': SQLlist[4]})
             await db.commit()
-        except (OSError, DatabaseError):
+        except (IndexError, OperationalError, ProgrammingError):
             log.error("Exception occured", exc_info=True)
             raise
         else:
@@ -107,9 +108,11 @@ class MyServer:
 
     async def deleteuser(self, db, SQLlist):
         try:
-            await db.execute("DELETE FROM Cipher WHERE ID = :ID", {'ID': SQLlist[1]})
+            await db.execute("DELETE FROM Cipher\
+                              WHERE ID = :ID",
+                              {'ID': SQLlist[1]})
             await db.commit()
-        except (OSError, IndexError, Exception,  DatabaseError):
+        except (IndexError, OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -128,7 +131,7 @@ class MyServer:
 
             cursor = await self.iterate_(cursor)
 
-        except (OSError, IndexError, Exception, DatabaseError):
+        except (DatabaseError, OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -143,7 +146,7 @@ class MyServer:
             cursor = await cursor.fetchall()
             cursor = await self.iterate_(cursor)
 
-        except (OSError, IndexError, Exception, DatabaseError):
+        except (DatabaseError, OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -158,7 +161,7 @@ class MyServer:
                                               FIO_employee, RegDate \
                                        FROM records \
                                        WHERE RecDate = :RecDate",
-                                       {'RecDate': SQLlist[1]})           
+                                       {'RecDate': SQLlist[1]})
             cursor = await cursor.fetchall()
 
             if cursor == []:
@@ -168,7 +171,7 @@ class MyServer:
                 log.info("Запрос на текущие заявки")
                 cursor = await self.iterate_(cursor)
 
-        except (OSError, IndexError, Exception, DatabaseError):
+        except (IndexError, OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -182,23 +185,23 @@ class MyServer:
                               VALUES (:FIO, :address, :telephone, :reason, :information,\
                                       :for_master, :master, :record_value, :Category, :FIO_employee,\
                                       :RegDate, :RecDate, :Tariff)",\
-                              {
-                                'FIO': SQLlist[1],
-                                'address': SQLlist[2],
-                                'telephone': SQLlist[3],
-                                'reason': SQLlist[4],
-                                'information': SQLlist[5],
-                                'for_master': SQLlist[6],
-                                'master': SQLlist[7],
-                                'record_value': SQLlist[8],
-                                'Category': SQLlist[9],
-                                'FIO_employee': SQLlist[10],
-                                'RegDate': SQLlist[11],
-                                'RecDate': SQLlist[12],
-                                'Tariff': SQLlist[13]
-                              })
+                            {
+                              'FIO': SQLlist[1],
+                              'address': SQLlist[2],
+                              'telephone': SQLlist[3],
+                              'reason': SQLlist[4],
+                              'information': SQLlist[5],
+                              'for_master': SQLlist[6],
+                              'master': SQLlist[7],
+                              'record_value': SQLlist[8],
+                              'Category': SQLlist[9],
+                              'FIO_employee': SQLlist[10],
+                              'RegDate': SQLlist[11],
+                              'RecDate': SQLlist[12],
+                              'Tariff': SQLlist[13]
+                            })
             await db.commit()
-        except (OSError, IndexError, Exception, DatabaseError):
+        except (IndexError, OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -208,12 +211,12 @@ class MyServer:
 
     async def delete(self, db, SQLlist):
         try:
-            await db.execute("DELETE FROM records\
-                              WHERE address = :address AND\
-                                    RegDate = :RegDate",
-                              {'address': SQLlist[1], 'RegDate': SQLlist[2]})
+            await db.executemany("DELETE FROM records\
+                                  WHERE address = :address AND\
+                                        RegDate = :RegDate",
+                                {'address': SQLlist[1], 'RegDate': SQLlist[2]})
             await db.commit()
-        except (OSError, IndexError, Exception, DatabaseError):
+        except (IndexError, OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -230,22 +233,22 @@ class MyServer:
                                   record_value = :record_value, Category = :Category,\
                                   RecDate = :RecDate, Tariff = :Tariff\
                               WHERE address = :address AND RegDate = :RegDate",
-                              {
-                                'FIO': SQLlist[1],
-                                'address': SQLlist[2],
-                                'telephone': SQLlist[3],
-                                'reason': SQLlist[4],
-                                'information': SQLlist[5],
-                                'for_master': SQLlist[6],
-                                'master': SQLlist[7],
-                                'record_value': SQLlist[8],
-                                'Category': SQLlist[9],
-                                'RegDate': SQLlist[10],
-                                'RecDate': SQLlist[11],
-                                'Tariff': SQLlist[12]
-                              })
+                            {
+                              'FIO': SQLlist[1],
+                              'address': SQLlist[2],
+                              'telephone': SQLlist[3],
+                              'reason': SQLlist[4],
+                              'information': SQLlist[5],
+                              'for_master': SQLlist[6],
+                              'master': SQLlist[7],
+                              'record_value': SQLlist[8],
+                              'Category': SQLlist[9],
+                              'RegDate': SQLlist[10],
+                              'RecDate': SQLlist[11],
+                              'Tariff': SQLlist[12]
+                            })
             await db.commit()
-        except (OSError, IndexError, Exception, DatabaseError):
+        except (IndexError, OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -272,58 +275,59 @@ class MyServer:
                     if keyword == "ENTER":
                         enter_ = await asyncio.shield(\
                                        asyncio.wait_for(\
-                                                        self.enter(db, SQLlist), timeout=5.0))
+                                                        self.enter(db, SQLlist), timeout=2.0))
                         return enter_
                     elif keyword == "REGISTER":
                         register_ = await asyncio.shield(\
                                           asyncio.wait_for(\
-                                                           self.register(db, SQLlist), timeout=5.0))
+                                                           self.register(db, SQLlist), timeout=2.0))
                         return register_
                     elif keyword == "DELETEUSER":
                         delete_user_ = await asyncio.shield(\
-                                              asyncio.wait_for(\
-                                                               self.deleteuser(db, SQLlist), timeout=5.0))
+                                             asyncio.wait_for(\
+                                                              self.deleteuser(db, SQLlist), timeout=2.0))
                         return delete_user_
                     elif keyword == "ALLQUERY":
                         all_query_ = await asyncio.shield(\
                                            asyncio.wait_for(\
-                                                            self.allquery(db), timeout=5.0))
+                                                            self.allquery(db), timeout=2.0))
                         return all_query_
                     elif keyword == "USERQUERY":
                         user_query_ = await asyncio.shield(\
                                             asyncio.wait_for(\
-                                                             self.userquery(db), timeout=5.0))
+                                                             self.userquery(db), timeout=2.0))
                         return user_query_
                     elif keyword == "CURQUERY":
                         cur_query_ = await asyncio.shield(\
                                            asyncio.wait_for(\
-                                                            self.curquery(db, SQLlist), timeout=5.0))
+                                                            self.curquery(db, SQLlist), timeout=2.0))
                         return cur_query_
                     elif keyword == "INSERT":
                         insert_ = await asyncio.shield(\
                                         asyncio.wait_for(\
-                                                         self.insert(db, SQLlist), timeout=5.0))
+                                                         self.insert(db, SQLlist), timeout=2.0))
                         return insert_
                     elif keyword == "DELETE":
                         delete_ = await asyncio.shield(\
                                         asyncio.wait_for(\
-                                                         self.delete(db, SQLlist), timeout=5.0))
+                                                         self.delete(db, SQLlist), timeout=2.0))
                         return delete_
                     elif keyword == "UPDATE":
                         update_ = await asyncio.shield(\
                                         asyncio.wait_for(\
-                                                         self.update(db, SQLlist), timeout=5.0))
+                                                         self.update(db, SQLlist), timeout=2.0))
                         return update_
                     elif keyword == "CHANGEUSER":
                         update_user = await asyncio.shield(\
                                             asyncio.wait_for(\
-                                                            self.changeuser(db, SQLlist), timeout=2.0))
+                                                             self.changeuser(db, SQLlist), timeout=2.0))
                         return update_user
                     else:
                         log.info("Поступил неправильный запрос")
                         wrong_query = "Неправильный запрос"
                         return wrong_query
-            except (Exception, OSError, DatabaseError, RuntimeError):
+            except (NotSupportedError, DatabaseError,\
+                    asyncio.TimeoutError, asyncio.CancelledError):
                 log.error("Exception occured", exc_info=True)
                 raise
 
@@ -335,8 +339,7 @@ class MyServer:
             print("client task done", file = sys.stderr)
             client_writer.close()
             await client_writer.wait_closed()
-        except (OSError, ConnectionError, RuntimeError,\
-                asyncio.CancelledError, asyncio.InvalidStateError, asyncio.TimeoutError):
+        except (IOError, Exception):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -352,7 +355,8 @@ class MyServer:
         try:
             handle_task = asyncio.create_task(\
                                               self.handle_client(client_reader, client_writer))
-        except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
+        except (asyncio.TimeoutError, asyncio.CancelledError,\
+                asyncio.IncompleteReadError, asyncio.InvalidStateError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -360,7 +364,7 @@ class MyServer:
                 self.clients[handle_task] = client_reader, client_writer
                 done, pending = await asyncio.shield(\
                                       asyncio.wait({handle_task}))
-            except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
+            except (asyncio.TimeoutError, asyncio.CancelledError):
                 log.error("Exception occurred", exc_info=True)
                 handle_task.cancel()
                 raise
@@ -368,10 +372,12 @@ class MyServer:
                 if handle_task in done:
                     handle_task.cancel()
                     try:
-                        done_task = asyncio.create_task(self.client_done(handle_task, client_writer))
+                        done_task = asyncio.create_task(\
+                                                        self.client_done(handle_task, client_writer))
                         done, pending = await asyncio.shield(\
                                               asyncio.wait({done_task}))
-                    except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
+                    except (asyncio.TimeoutError, asyncio.CancelledError,
+                            asyncio.InvalidStateError):
                         log.error("Exception occurred", exc_info=True)
                         done_task.cancel()
                         raise
@@ -386,67 +392,73 @@ class MyServer:
 
         while True:
             # client_reader waits to reads data till EOF '\n'
-            read_data_task = asyncio.create_task(client_reader.readline())
-            # if connection established
-            if read_data_task:
-                done, pending = await asyncio.shield(\
-                                      asyncio.wait({read_data_task}))
-                if read_data_task in done:
-                    try:
-                        received_query = read_data_task.result()
-                        # this Task decrypts client message
-                        decrypt_data_task = asyncio.create_task(\
-                                                                AsyncioBlockingIO().decrypt_message(received_query))
-                        done, pending = await asyncio.shield(\
-                                              asyncio.wait({decrypt_data_task}))
-                    except (Exception, OSError, RuntimeError,\
-                            asyncio.TimeoutError, asyncio.CancelledError):
-                        log.error("Exception occurred", exc_info=True)
-                        decrypt_data_task.cancel()
-                        raise
-                    else:
-                        if decrypt_data_task in done:
-                            try:
-                                decrypted_data = decrypt_data_task.result()
-                                message = decrypted_data.split("^")
-                                addr = client_writer.get_extra_info('peername')
-                                print(f"Connected to {addr!r}")
-                                log.info(f"Connected to {addr!r}")
-
-                                db_task = asyncio.create_task(self.access_db(SQLlist=message))
-                                done, pending = await asyncio.shield(\
-                                                      asyncio.wait({db_task}))
-                            except (OSError, Exception, RuntimeError,\
-                                    asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
-                                log.error("Exception occurred", exc_info=True)
-                                db_task.cancel()
-                                raise
-                            else:
-                                if db_task in done:
-                                    try:
-                                        data_from_db = db_task.result()
-                                        # wait untill writer is ready
-                                        write_task = asyncio.create_task(\
-                                                                         self.write_response(client_writer, data_from_db))
-                                        done, pending = await asyncio.shield(\
-                                                              asyncio.wait({write_task}))
-                                    except (OSError, Exception, RuntimeError,\
-                                            asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
-                                        log.error("Exception occurred", exc_info=True)
-                                        write_task.cancel()
-                                        raise
-                                    finally:
-                                        # when write Task is done, .cancel all Tasks
-                                        if write_task in done:
-                                            try:
-                                                print("Connection finished")
-                                                return
-                                            except (OSError, Exception, RuntimeError,\
-                                                    asyncio.TimeoutError, asyncio.InvalidStateError):
-                                                log.error("Exception occurred", exc_info=True)
-                                                raise
+            try:
+                read_data_task = asyncio.create_task(client_reader.readline())
+            except (asyncio.TimeoutError, asyncio.IncompleteReadError,\
+                    asyncio.InvalidStateError):
+                log.error("Exception occured", exc_info=True)
+                raise
             else:
-                break
+                # if connection established
+                if read_data_task:
+                    done, pending = await asyncio.shield(\
+                                        asyncio.wait({read_data_task}))
+                    if read_data_task in done:
+                        try:
+                            received_query = read_data_task.result()
+                            # this Task decrypts client message
+                            decrypt_data_task = asyncio.create_task(\
+                                                                    AsyncioBlockingIO().decrypt_message(received_query))
+                            done, pending = await asyncio.shield(\
+                                                asyncio.wait({decrypt_data_task}))
+                        except (asyncio.InvalidStateError, asyncio.TimeoutError,\
+                                asyncio.CancelledError):
+                            log.error("Exception occurred", exc_info=True)
+                            decrypt_data_task.cancel()
+                            raise
+                        else:
+                            if decrypt_data_task in done:
+                                try:
+                                    decrypted_data = decrypt_data_task.result()
+                                    message = decrypted_data.split("^")
+                                    addr = client_writer.get_extra_info('peername')
+                                    print(f"Connected to {addr!r}")
+                                    log.info(f"Connected to {addr!r}")
+
+                                    db_task = asyncio.create_task(self.access_db(SQLlist=message))
+                                    done, pending = await asyncio.shield(\
+                                                        asyncio.wait({db_task}))
+                                except (asyncio.TimeoutError, asyncio.CancelledError,\
+                                        asyncio.InvalidStateError):
+                                    log.error("Exception occurred", exc_info=True)
+                                    db_task.cancel()
+                                    raise
+                                else:
+                                    if db_task in done:
+                                        try:
+                                            data_from_db = db_task.result()
+                                            # wait untill writer is ready
+                                            write_task = asyncio.create_task(\
+                                                                            self.write_response(client_writer, data_from_db))
+                                            done, pending = await asyncio.shield(\
+                                                                asyncio.wait({write_task}))
+                                        except (asyncio.TimeoutError, asyncio.CancelledError,\
+                                                asyncio.InvalidStateError):
+                                            log.error("Exception occurred", exc_info=True)
+                                            write_task.cancel()
+                                            raise
+                                        finally:
+                                            # when write Task is done, .cancel all Tasks
+                                            if write_task in done:
+                                                try:
+                                                    print("Connection finished")
+                                                    return
+                                                except (asyncio.TimeoutError, asyncio.CancelledError,\
+                                                        asyncio.InvalidStateError):
+                                                    log.error("Exception occurred", exc_info=True)
+                                                    raise
+                else:
+                    break
 
     async def write_response(self, client_writer, data):
         """This function encrypting data from DB query
@@ -461,8 +473,8 @@ class MyServer:
                                                AsyncioBlockingIO().encrypt_message(data))
             done, pending = await asyncio.shield(\
                                   asyncio.wait({encrypt_task}))
-        except (OSError, Exception, RuntimeError,\
-                asyncio.TimeoutError, asyncio.CancelledError, asyncio.InvalidStateError):
+        except (asyncio.TimeoutError, asyncio.CancelledError,\
+                asyncio.InvalidStateError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -475,8 +487,7 @@ class MyServer:
                 else:
                     try:
                        client_writer.write(query)
-                    except (OSError, Exception, ConnectionError,\
-                            asyncio.InvalidStateError, RuntimeError):
+                    except (asyncio.SendfileNotAvailableError, IOError):
                         log.error("Exception occured", exc_info=True)
                         raise
                     else:
