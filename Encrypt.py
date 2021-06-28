@@ -41,9 +41,10 @@ class Internet:
             sock.send(b'^\n')
             while True:
                 __msg = sock.recv(1024)
-                if __msg: 
+                if __msg:
                     _recv_buffer = iadd(_recv_buffer, __msg)
-                else: break
+                else:
+                    break
         except (UnicodeDecodeError, error,\
                 ValueError, OSError, InterruptedError, Exception) as __err:
             messagebox.showinfo("Ошибка", __err)

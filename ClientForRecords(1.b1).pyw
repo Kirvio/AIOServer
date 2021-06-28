@@ -1,4 +1,3 @@
-from asyncio.windows_events import ProactorEventLoop
 from tkinter import Tk, messagebox, IntVar, Toplevel,\
                     Checkbutton, ttk, Button, Entry, Label, StringVar,\
                     Menu, END, Frame, Scrollbar, RIGHT, CENTER,\
@@ -45,7 +44,7 @@ class Table(Frame):
                                       anchor=CENTER, command=lambda __lhead=__head :\
                                       self.__treeview_sort_column(self.__tree, __lhead, False)),
           self.__tree.column(__head, anchor=CENTER, width=240))\
-                                     for __head in headings]
+                                                               for __head in headings]
 
         [self.__tree.insert('', END, values=__row) for __row in rows]
 
@@ -441,9 +440,9 @@ class Search(Toplevel):
     def __init__(self, Parent, data=tuple()):
         super().__init__(Parent)
 
-        self.__variables = \
-                           [self.__month_date, self.__employee, self.__category] = \
-                                                                                   StringVar(), StringVar(), StringVar()
+
+        self.__month_date, self.__employee, self.__category = \
+                                                              StringVar(), StringVar(), StringVar()
 
         MyLeftPos = (self.winfo_screenwidth() - 1200) / 2
         myTopPos = (self.winfo_screenheight() - 500) / 2
@@ -506,9 +505,9 @@ class Search(Toplevel):
                                                                      Root.insert_in_entryes(entryes=entryes_tuple, dell=1))
 
         self.__update_button = Button(self, font=("Times New Roman", 12),
-                                           background='White', activebackground='sky blue',
-                                           fg="gray1", text="Обновить таблицу",
-                                           width=15, command=self.query_all)
+                                            background='White', activebackground='sky blue',
+                                            fg="gray1", text="Обновить таблицу",
+                                            width=15, command=self.query_all)
 
         self.__month_box.place(relwidth=0.15,
                                relheight=0.05, relx=0.18, rely=0.10)
@@ -1029,9 +1028,9 @@ class Root(Tk):
                                __d_string, list_[0], list_[5])
                 __pattern = r'[A-Za-z]'
                 __check = [__z for __z in __variables \
-                            if __z == '' \
-                                         or len(__z) > 100 \
-                                         or re.findall(__pattern, __z)]
+                               if __z == '' \
+                                            or len(__z) > 100 \
+                                            or re.findall(__pattern, __z)]
             except Exception as exc:
                 messagebox.showinfo("Ошибка:", exc)
             else:
@@ -1146,8 +1145,8 @@ class Root(Tk):
             __variables = (*list_[1:5], *list_[6:12], list_[0], list_[5])
             __pattern = r'[A-Za-z]'
             __check = [__z for __z in __variables\
-                         if __z == '' or len(__z) > 100 \
-                                      or re.findall(__pattern, __z)]
+                           if __z == '' or len(__z) > 100 \
+                                        or re.findall(__pattern, __z)]
         except (TypeError, Exception, UnboundLocalError) as exc:
             messagebox.showinfo("Ошибка:", exc)
         else:
