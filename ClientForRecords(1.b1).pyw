@@ -68,8 +68,17 @@ class Table(Frame):
             self.t_m.add_command(label="Показать меню", command=Parent.show_menu)
             self.t_m.add_command(label="Поиск по дате", command=lambda: Parent.search(ID=2))
             self.t_m.add_separator()
-            self.t_m.add_command(label="Экспорт в Excel", command=self.Export)
+            self.t_m.add_command(label="Экспорт в Excel", command=lambda: self.Export(heading=headings))
 
+            self.__tree.bind('<Button-3>', self.__do_popup)
+        elif counter == 2:
+            self.t_m = Menu(self,
+                                 font=("Inter Medium", 9),
+                                 activebackground='sky blue',
+                                 activeforeground='gray1', tearoff=0)
+            self.t_m.add_command(label="Обновить таблицу", command=Parent.query_all)
+            self.t_m.add_separator()
+            self.t_m.add_command(label="Экспорт в Excel", command=lambda: self.Export(heading=headings))
             self.__tree.bind('<Button-3>', self.__do_popup)
 
     def __treeview_sort_column(self, tv, col, reverse):
@@ -180,7 +189,7 @@ class Table(Frame):
                        for __child in self.__tree.get_children() \
                        for __item in self.__tree.item(__child)['values'] \
                        if type(__item) == str if val in __item]
-        return val
+        yield tuple(val)
 
     def search_query(self, trigger):
         """searching in the table for values
@@ -206,10 +215,12 @@ class Table(Frame):
                 messagebox.showinfo("Error", err, parent=self.Parent)
         else:
             try:
-                __selections1 = self.search_sort(trigger[0])
-                __selections2 = self.search_sort(trigger[1])
-                __selections3 = self.search_sort(trigger[2])
-                common_ones = list(set(__selections1) & set(__selections2) & set(__selections3))
+                __selections1 = next(self.search_sort(trigger[0]))
+                __selections2 = next(self.search_sort(trigger[1]))
+                __selections3 = next(self.search_sort(trigger[2]))
+                __selections4 = next(self.search_sort(trigger[3]))
+                common_ones = list(set(__selections1) & set(__selections2)\
+                                   & set(__selections3) & set(__selections4))
                 if common_ones == []:
                     messagebox.showinfo("Внимание",\
                                         "Таких данных в таблице нет, попробуйте обновить таблицу",
@@ -345,7 +356,7 @@ class Registration(Toplevel):
         self.__clear_button.place(relwidth=0.14,
                                   relheight=0.06, relx=0.50, rely=0.85)
         self.__change_usr.place(relwidth=0.14,
-                                          relheight=0.06, relx=0.65, rely=0.85)
+                                relheight=0.06, relx=0.65, rely=0.85)
 
         # Lock on changing window size
         # Запрет на иземение размера окна
@@ -441,8 +452,9 @@ class Search(Toplevel):
         super().__init__(Parent)
 
 
-        self.__month_date, self.__employee, self.__category = \
-                                                              StringVar(), StringVar(), StringVar()
+        self.__month_date, self.__employee,\
+        self.__category, self.__year_date = \
+                                            StringVar(), StringVar(), StringVar(), StringVar()
 
         MyLeftPos = (self.winfo_screenwidth() - 1200) / 2
         myTopPos = (self.winfo_screenheight() - 500) / 2
@@ -451,6 +463,8 @@ class Search(Toplevel):
 
         self.__date_search__label = Label(self, bg="gray10", fg="white",
                                                 font=("Times New Roman", 12), text="Выберите месяц:")
+        self.__year_search_label = Label(self, bg="gray10", fg="white",
+                                               font=("Times New Roman", 12), text="Выберите год:")
         self.__employee_search_label = Label(self, bg="gray10", fg="white",
                                                    font=("Times New Roman", 12), text="ФИО Сотрудника:")
         self.__category_search_label = Label(self, bg="gray10", fg="white",
@@ -474,12 +488,20 @@ class Search(Toplevel):
                                              font=("Times New Roman", 12), style='my.TCombobox',
                                              width=18, textvariable=self.__month_date)
 
-        __month_dict = {'Декабрь': '.12.', 'Январь': '.01.', 'Февраль': '.02.',
+        __month_dict = {'Январь': '.01.', 'Февраль': '.02.',
                         'Март': '.03.', 'Апрель': '.04.', 'Май': '.05.',
                         'Июнь': '.06.', 'Июль': '.07.', 'Август': '.08.',
-                        'Сентябрь': '.09.', 'Октябрь': '.10.', 'Ноябрь': '.11.', '': ''}
+                        'Сентябрь': '.09.', 'Октябрь': '.10.',
+                        'Ноябрь': '.11.', 'Декабрь': '.12.', '': ''}
 
         self.__month_box['values'] = list(__month_dict.keys())[0:12]
+
+        self.__year_box = ttk.Combobox(self,
+                                             font=("Times New Roman", 12), style='my.TCombobox',
+                                             width=18, textvariable=self.__year_date)
+
+        self.__year_box['values'] = ('2021', '2022', '2023', '2024', '2025',\
+                                     '2026', '2027', '2028', '2029', '2030')
 
         self.__table = Table(self, headings=('Дата выполнения заявки', 'ФИО', 'Адрес',
                                              'Телефон', 'Причина', 'Текущий ТП', 'Время выполнения',
@@ -487,7 +509,7 @@ class Search(Toplevel):
                                              'ФИО сотрудника', 'Дата регистрации'), rows=data, counter=2)
 
         entryes_tuple = (self.__category_box, self.__employee_search_box,
-                         self.__month_box)
+                         self.__month_box, self.__year_box)
 
         self.__search_button = Button(self, font=("Times New Roman", 12),
                                             background='White', activebackground='sky blue',
@@ -495,6 +517,7 @@ class Search(Toplevel):
                                             width=15, command=lambda: \
                                                                       self.__table.search_query(\
                                                                                                 trigger=(__month_dict[self.__month_box.get()],
+                                                                                                         self.__year_date.get(),
                                                                                                          self.__employee.get(),
                                                                                                          self.__category.get())))
 
@@ -510,18 +533,22 @@ class Search(Toplevel):
                                             width=15, command=self.query_all)
 
         self.__month_box.place(relwidth=0.15,
-                               relheight=0.05, relx=0.18, rely=0.10)
+                               relheight=0.05, relx=0.31, rely=0.04)
+        self.__year_box.place(relwidth=0.15,
+                              relheight=0.05, relx=0.60, rely=0.04)
         self.__employee_search_box.place(relwidth=0.15,
-                                         relheight=0.05, relx=0.44, rely=0.10)
+                                         relheight=0.05, relx=0.31, rely=0.11)
         self.__category_box.place(relwidth=0.15,
-                                  relheight=0.05, relx=0.72, rely=0.10)
+                                  relheight=0.05, relx=0.60, rely=0.11)
 
         self.__date_search__label.place(relwidth=0.14,
-                                        relheight=0.04, relx=0.06, rely=0.10)
+                                        relheight=0.04, relx=0.18, rely=0.04)
+        self.__year_search_label.place(relwidth=0.14,
+                                       relheight=0.04, relx=0.46, rely=0.04)
         self.__employee_search_label.place(relwidth=0.15,
-                                           relheight=0.04, relx=0.31, rely=0.10)
+                                           relheight=0.04, relx=0.18, rely=0.11)
         self.__category_search_label.place(relwidth=0.15,
-                                           relheight=0.04, relx=0.58, rely=0.10)
+                                           relheight=0.04, relx=0.46, rely=0.11)
 
         self.__search_button.place(relwidth=0.15,
                                    relheight=0.06, relx=0.20, rely=0.20)
@@ -543,7 +570,7 @@ class Search(Toplevel):
         """
         try:
             __received_data = Internet().IntoNetwork(data="ALLQUERY")
-            __sorted_data = Root.sorting_(received_data=__received_data)
+            __sorted_data = next(Root.sorting_(received_data=__received_data))
             self.__table.update_table(rs=__sorted_data)
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc, parent=self)
@@ -694,7 +721,7 @@ class Authentication(Tk):
                     Authentication.mainroot = Root()
                     Root.isfull_label.configure(text="На сегодня заявок нет")
                 else:
-                    __sorted_data = Root.sorting_(received_data=__received_data)
+                    __sorted_data = next(Root.sorting_(received_data=__received_data))
                     time.sleep(0.2)
                     Authentication.mainroot = Root(__sorted_data)
                     Root.isfull_label.configure(text="Заявки на сегодня:")
@@ -987,7 +1014,7 @@ class Root(Tk):
         except (AttributeError, TypeError) as err:
             messagebox.showinfo("Ошибка", err)
         else:
-            return __received_msg
+            yield tuple(__received_msg)
 
     def instruction(self):
         """This function purpose is to open file
@@ -1002,7 +1029,7 @@ class Root(Tk):
         """
         try:
             __received_data = Internet().IntoNetwork(data="ALLQUERY")
-            __sorted_data = self.sorting_(received_data=__received_data)
+            __sorted_data = next(self.sorting_(received_data=__received_data))
             self.table.update_table(rs=__sorted_data)
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
@@ -1178,7 +1205,7 @@ class Root(Tk):
         """
         try:
             __received_data = Internet().IntoNetwork(data="USERQUERY^")
-            __sorted_data = self.sorting_(received_data=__received_data)
+            __sorted_data = next(self.sorting_(received_data=__received_data))
             Root.reg_window = Registration(self, __sorted_data)
         except (Exception, UnboundLocalError) as exc:
             messagebox.showinfo("Ошибка:", exc)
@@ -1188,7 +1215,7 @@ class Root(Tk):
         """Open window for search"""
         try:
             __received_data = Internet().IntoNetwork(data="ALLQUERY^")
-            __sorted_data = self.sorting_(received_data=__received_data)
+            __sorted_data = next(self.sorting_(received_data=__received_data))
             Root.search_window_ = Search(self, data=__sorted_data)
         except (Exception, UnboundLocalError) as exc:
             messagebox.showinfo("Ошибка:", exc)
