@@ -210,11 +210,17 @@ class MyServer:
             return msg
 
     async def delete(self, db, SQLlist):
+        print(SQLlist)
         try:
             await db.execute("DELETE FROM records\
-                              WHERE address = :address AND\
-                                    RegDate = :RegDate",
-                            {'address': SQLlist[1], 'RegDate': SQLlist[2]})
+                              WHERE RegDate = :RegDate AND \
+                                    address = :address AND \
+                                    RecDate = :RecDate AND \
+                                    FIO = :FIO",
+                            {'RegDate': SQLlist[1],\
+                             'RecDate': SQLlist[2],\
+                             'address': SQLlist[3],\
+                             'FIO': SQLlist[4]})
             await db.commit()
         except (IndexError, OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
@@ -232,7 +238,10 @@ class MyServer:
                                   for_master = :for_master, master = :master,\
                                   record_value = :record_value, Category = :Category,\
                                   RecDate = :RecDate, Tariff = :Tariff\
-                              WHERE address = :address AND RegDate = :RegDate",
+                              WHERE RegDate = :RegDate AND \
+                                    address = :address AND \
+                                    RecDate = :RecDate AND \
+                                    FIO = :FIO",
                             {
                               'FIO': SQLlist[1],
                               'address': SQLlist[2],

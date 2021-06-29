@@ -226,24 +226,21 @@ class Table(Frame):
                 if common_ones == []:
                     messagebox.showinfo("Внимание",\
                                         "Таких данных в таблице нет, попробуйте обновить таблицу",
-                                        parent=self.Parent)
+                                                                                                  parent=self.Parent)
                 else:
                     [self.__tree.delete(__child) for __child in self.__tree.get_children() \
                                                                                            if __child not in common_ones]
             except (TypeError, IndexError) as err:
                 messagebox.showinfo("Error", err, parent=self.Parent)
 
-    def change_record(self, trigger, entry=tuple()):
+    def change_record(self, trigger, entry=list()):
         """Renew changed line
            Обновляет измененную строку
         """
         try:
-            __check = [__child for __child in self.__tree.get_children() \
-                                                                         if trigger in self.__tree.item(__child)['values']]
-            if __check:
-                self.__tree.delete(__check)
-                [self.__tree.insert('', END, values=__row) for __row in entry]
-        except TypeError as err:
+            self.remove_record(trigger)
+            [self.__tree.insert('', END, values=__row) for __row in entry]
+        except (TypeError, IndexError) as err:
             messagebox.showinfo("Error", err, parent=self.Parent)
 
     def add_record(self, entry=tuple()):
@@ -255,15 +252,17 @@ class Table(Frame):
         except TypeError as err:
             messagebox.showinfo("Error", err, parent=self.Parent)
 
-    def remove_record(self, adr, regdate):
+    def remove_record(self, trigger):
         """Deleting record by address
            Удаляет заявку по адрессу
         """
         try:
             [self.__tree.delete(__child) for __child in self.__tree.get_children() \
-                                                                                   if adr in self.__tree.item(__child)['values'] and\
-                                                                                      regdate in self.__tree.item(__child)['values']]
-        except TypeError as err:
+                                                                                   if trigger[0] in self.__tree.item(__child)['values'] and \
+                                                                                      trigger[1] in self.__tree.item(__child)['values'] and \
+                                                                                      trigger[2] in self.__tree.item(__child)['values'] and \
+                                                                                      trigger[3] in self.__tree.item(__child)['values']]
+        except (TypeError, IndexError) as err:
             messagebox.showinfo("Error", err, parent=self.Parent)
 
 class Registration(Toplevel):
@@ -273,8 +272,8 @@ class Registration(Toplevel):
         super().__init__(Parent)
 
         self.__variables = [self.ID, self.Login,
-                            self.Password, self.FIO_empl] =\
-                                                           StringVar(), StringVar(), StringVar(), StringVar()
+                            self.Password, self.FIO_empl] = \
+                                                            StringVar(), StringVar(), StringVar(), StringVar()
         self.title("Администрирование:")
 
         MyLeftPos = (self.winfo_screenwidth() - 1200) / 2
@@ -370,7 +369,7 @@ class Registration(Toplevel):
         try:
             list_ = [i.get() for i in self.__variables]
             check_ = [x for x in list_ \
-                        if x == ""]
+                                       if x == ""]
         except Exception as exc:
             messagebox.showinfo("Ошибка", exc, parent=self)
         else:
@@ -424,7 +423,7 @@ class Registration(Toplevel):
         try:
             list_ = [i.get() for i in self.__variables]
             check_ = [x for x in list_ \
-                        if x == ""]
+                                       if x == ""]
         except Exception as exc:
             messagebox.showinfo("Ошибка", exc, parent=self)
         else:
@@ -499,8 +498,8 @@ class Search(Toplevel):
         self.__month_box['values'] = list(__month_dict.keys())[0:12]
 
         self.__year_box = ttk.Combobox(self,
-                                             font=("Times New Roman", 12), style='my.TCombobox',
-                                             width=18, textvariable=self.__year_date)
+                                            font=("Times New Roman", 12), style='my.TCombobox',
+                                            width=18, textvariable=self.__year_date)
 
         self.__year_box['values'] = ('2021', '2022', '2023', '2024', '2025',\
                                      '2026', '2027', '2028', '2029', '2030')
@@ -544,9 +543,9 @@ class Search(Toplevel):
                                   relheight=0.05, relx=0.60, rely=0.11)
 
         self.__date_search__label.place(relwidth=0.14,
-                                        relheight=0.04, relx=0.18, rely=0.04)
-        self.__year_search_label.place(relwidth=0.14,
-                                       relheight=0.04, relx=0.46, rely=0.04)
+                                        relheight=0.04, relx=0.19, rely=0.04)
+        self.__year_search_label.place(relwidth=0.11,
+                                       relheight=0.04, relx=0.50, rely=0.04)
         self.__employee_search_label.place(relwidth=0.15,
                                            relheight=0.04, relx=0.18, rely=0.11)
         self.__category_search_label.place(relwidth=0.15,
@@ -886,7 +885,10 @@ class Root(Tk):
         self.__delete_button = Button(self, font=("Times New Roman", 12),
                                             background='White', activebackground='sky blue',
                                             fg="gray1", text="Удалить запись",
-                                            width=15, command=self.delete_record)
+                                            width=15, command=lambda: self.delete_record(trigger=[self.RegDate.get(),\
+                                                                                                  self.Date.get(),\
+                                                                                                  self.address.get(),\
+                                                                                                  self.FIO.get()]))
 
         self.__add_button = Button(self, font=("Times New Roman", 12),
                                          background='White', activebackground='sky blue',
@@ -976,7 +978,7 @@ class Root(Tk):
                self.user == 'Соболь Владислав Николаевич' or\
                self.user == 'Кравцов Виктор Сергеевич':
                    __m.add_command(label="Администрирование", command=self.registration_window)
-        except Exception as exc:
+        except (Exception, TypeError) as exc:
             messagebox.showinfo("Ошибка:", exc)
 
         self.columnconfigure(1, weight=1)
@@ -1010,7 +1012,7 @@ class Root(Tk):
             __data_message = received_data.split('#^')
             __received_msg = (__s.split('^') for __s in __data_message)
             __received_msg = (__x for __x in __received_msg \
-                                  if __x != ('',))
+                                                            if __x != ('',))
         except (AttributeError, TypeError) as err:
             messagebox.showinfo("Ошибка", err)
         else:
@@ -1111,13 +1113,13 @@ class Root(Tk):
         except Exception as exc:
             messagebox.showinfo("Ошибка:", exc)
 
-    def connect(self, adr, date):
-        __request = "^".join(("DELETE", adr, date))
+    def connect(self, trigger):
+        __request = "^".join(("DELETE", *trigger))
         __received_data = Internet().IntoNetwork(data=__request)
         messagebox.showinfo("Data:", __received_data)
-        self.table.remove_record(adr=adr, regdate=date)
+        self.table.remove_record(trigger)
 
-    def delete_record(self):
+    def delete_record(self, trigger):
         """Sending address of the client
            with keyword DELETE, wich triggers
            DELETE query in DB on our server
@@ -1133,26 +1135,18 @@ class Root(Tk):
         result = messagebox.askyesno(message=message, parent=self)
         if result:
             try:
-                __pattern = r'[A-Za-z]'
-                __DADR, __RegDate = self.address.get(), self.RegDate.get()
-            except (Exception, UnboundLocalError) as exc:
-                messagebox.showinfo("Ошибка:", exc)
-            else:
-                try:
-                    if __DADR == '' or re.findall(__pattern, __DADR):
-                        messagebox.showinfo("Ошибка", "Заполните адресс корректно")
-                    elif self.r_var.get() == "Открыта":
-                        message = "Заявка в открытом состоянии,\
-                                   \nвы уверены что хотите удалить заявку?"
-                        result = messagebox.askyesno(message=message, parent=self)
-                        if result:
-                                self.connect(__DADR, __RegDate)
-                        else:
-                            pass
+                if self.r_var.get() == "Открыта":
+                    message = "Заявка в открытом состоянии,\
+                               \nвы уверены что хотите удалить заявку?"
+                    result = messagebox.askyesno(message=message, parent=self)
+                    if result:
+                        self.connect(trigger)
                     else:
-                        self.connect(__DADR, __RegDate)
-                except Exception as exc:
-                    messagebox.showinfo("Ошибка:", exc)
+                        pass
+                else:
+                    self.connect(trigger)
+            except Exception as exc:
+                messagebox.showinfo("Ошибка:", exc)
         else:
             pass
 
@@ -1189,7 +1183,8 @@ class Root(Tk):
                         __request = "^".join(("UPDATE", *__variables))
                         __received_data = Internet().IntoNetwork(data=__request)
                         messagebox.showinfo("Data:", __received_data)
-                        self.table.change_record(trigger=__variables[0], entry=__gr_var)
+                        self.table.change_record(trigger=[__variables[9], __variables[0],\
+                                                          __variables[10], __variables[1]], entry=__gr_var)
                     else:
                         pass
             except (Exception, IndexError) as exc:
@@ -1280,28 +1275,28 @@ class Root(Tk):
         """
         time.sleep(0.2)
         self.update_idletasks()
-        self.__category_label.place(relwidth=0.15,
-                                    relheight=0.03, relx=0.01, rely=0.05)
-        self.__FIO_label.place(relwidth=0.15,
-                               relheight=0.03, relx=0.01, rely=0.10)
-        self.__address_label.place(relwidth=0.15,
-                                   relheight=0.03, relx=0.01, rely=0.15)
-        self.__telephone_label.place(relwidth=0.15,
-                                     relheight=0.03, relx=0.01, rely=0.20)
-        self.__reason_label.place(relwidth=0.15,
-                                  relheight=0.03, relx=0.01, rely=0.25)
-        self.__tariff_label.place(relwidth=0.15,
-                                  relheight=0.03, relx=0.01, rely=0.30)
+        self.__category_label.place(relwidth=0.12,
+                                    relheight=0.03, relx=0.05, rely=0.05)
+        self.__FIO_label.place(relwidth=0.10,
+                               relheight=0.03, relx=0.08, rely=0.10)
+        self.__address_label.place(relwidth=0.09,
+                                   relheight=0.03, relx=0.08, rely=0.15)
+        self.__telephone_label.place(relwidth=0.12,
+                                     relheight=0.03, relx=0.06, rely=0.20)
+        self.__reason_label.place(relwidth=0.12,
+                                  relheight=0.03, relx=0.06, rely=0.25)
+        self.__tariff_label.place(relwidth=0.12,
+                                  relheight=0.03, relx=0.05, rely=0.30)
         self.__information_label.place(relwidth=0.15,
-                                       relheight=0.03, relx=0.01, rely=0.35)
-        self.__for_master_label.place(relwidth=0.15,
-                                      relheight=0.03, relx=0.01, rely=0.40)
-        self.__master_label.place(relwidth=0.15,
-                                  relheight=0.03, relx=0.01, rely=0.45)
+                                       relheight=0.03, relx=0.02, rely=0.35)
+        self.__for_master_label.place(relwidth=0.12,
+                                      relheight=0.03, relx=0.05, rely=0.40)
+        self.__master_label.place(relwidth=0.11,
+                                  relheight=0.03, relx=0.06, rely=0.45)
         self.__record_value_label.place(relwidth=0.15,
-                                        relheight=0.03, relx=0.01, rely=0.61)
-        self.__data_label.place(relwidth=0.15,
-                                relheight=0.03, relx=0.01, rely=0.52)
+                                        relheight=0.03, relx=0.03, rely=0.61)
+        self.__data_label.place(relwidth=0.09,
+                                relheight=0.03, relx=0.08, rely=0.52)
         self.isfull_label.place(relwidth=0.15,
                                 relheight=0.03, relx=0.63, rely=0.01)
 
