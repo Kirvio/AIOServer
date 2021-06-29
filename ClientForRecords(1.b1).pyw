@@ -140,7 +140,7 @@ class Table(Frame):
                         messagebox.showinfo("Ошибка:", exc, parent=self.Parent)
             else:
                 messagebox.showinfo("Внимание", "Выберите строку в таблице",
-                                    parent=self.Parent)
+                                                                            parent=self.Parent)
 
     def __do_popup(self, event):
         try:
@@ -152,7 +152,8 @@ class Table(Frame):
         """Export data from table in excel
            Экспорт заявок с таблице в excel
         """
-        file = askopenfile(mode='w+', filetypes=[('Excel', '*.xlsx')])
+        file = askopenfile(mode='w+', filetypes=[('Excel', '*.xlsx')],
+                                                                      parent=self.Parent)
         if file:
             try:
                 workbook = Workbook(file.name)
@@ -170,7 +171,7 @@ class Table(Frame):
             else:
                 workbook.close()
                 messagebox.showinfo("Внимание", "Экспортировано успешно",
-                                    parent=self.Parent)
+                                                                         parent=self.Parent)
 
     def update_table(self, rs=tuple()):
         """Delete data from table and
@@ -211,7 +212,7 @@ class Table(Frame):
                     messagebox.showinfo("Внимание",\
                                         "Таких данных в таблице нет, попробуйте обновить таблицу\
                                         \nЧто-бы обновить таблицу выберите \n'Таблица' -> 'Все заявки/Обновить'",
-                                                                                                                parent=self.Parent)
+                                                                                                                 parent=self.Parent)
             except TypeError as err:
                 messagebox.showinfo("Error", err, parent=self.Parent)
         else:
@@ -760,11 +761,11 @@ class Root(Tk):
         style = ttk.Style()
 
         style.configure('my.DateEntry',
-                        selectforeground='gray1',
-                        selectbackground='sky blue')
+                                       selectforeground='gray1',
+                                       selectbackground='sky blue')
         style.configure('my.TCombobox',
-                        selectforeground='gray1',
-                        selectbackground='sky blue')
+                                       selectforeground='gray1',
+                                       selectbackground='sky blue')
 
         __now = datetime.now()
         __y_string = __now.strftime("%Y")
