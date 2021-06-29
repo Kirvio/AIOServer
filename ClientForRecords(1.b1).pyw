@@ -19,7 +19,7 @@ except ImportError:
 
 class Table(Frame):
 
-    def __init__(self, Parent=None, headings=tuple(), rows=tuple(), counter=0):
+    def __init__(self, Parent=None, headings=tuple(), rows=list(), counter=0):
         super().__init__(Parent)
 
         self.Parent = Parent
@@ -158,13 +158,13 @@ class Table(Frame):
                 workbook = Workbook(file.name)
                 worksheet = workbook.add_worksheet()
                 [worksheet.write(0, col_n, data) for col_n, data in enumerate(heading)]
-                __data = [self.__tree.item(__child)['values']\
-                                                             for __child in self.__tree.get_children()]
+                __data = [self.__tree.item(__child)['values'] \
+                                                              for __child in self.__tree.get_children()]
 
-                for row_num, row_data in enumerate(__data):
-                    for col_num, col_data in enumerate(row_data):
-                        worksheet.write(row_num+1, col_num, col_data)
-                        worksheet.set_column(col_num, 5, 40)
+                [[worksheet.write(row_num+1, col_num, col_data), \
+                  worksheet.set_column(col_num, 5, 40)] \
+                                                        for row_num, row_data in enumerate(__data)\
+                                                        for col_num, col_data in enumerate(row_data)]
             except Exception as err:
                 messagebox.showinfo("Ошибка", err, parent=self.Parent)
             else:
@@ -188,8 +188,9 @@ class Table(Frame):
         val = [__child \
                        for __child in self.__tree.get_children() \
                        for __item in self.__tree.item(__child)['values'] \
-                       if type(__item) == str if val in __item]
-        yield tuple(val)
+                                                                         if type(__item) == str \
+                                                                         if val in __item]
+        yield list(val)
 
     def search_query(self, trigger):
         """searching in the table for values
@@ -199,18 +200,18 @@ class Table(Frame):
         """
         if self.counter == 0:
             try:
-                __selections = [__child for __child in self.__tree.get_children()\
-                                        if trigger in self.__tree.item(__child)['values']]
+                __selections = [__child for __child in self.__tree.get_children() \
+                                                                                  if trigger in self.__tree.item(__child)['values']]
                 if __selections:
                     [self.__tree.delete(__child) for __child in self.__tree.get_children() \
-                                                 if __child not in __selections]
+                                                                                           if __child not in __selections]
                     Root.isfull_label.configure(text="Сортированные заявки")
                     #self.__tree.selection_set(__selections)
                 else:
                     messagebox.showinfo("Внимание",\
                                         "Таких данных в таблице нет, попробуйте обновить таблицу\
                                         \nЧто-бы обновить таблицу выберите \n'Таблица' -> 'Все заявки/Обновить'",
-                                        parent=self.Parent)
+                                                                                                                parent=self.Parent)
             except TypeError as err:
                 messagebox.showinfo("Error", err, parent=self.Parent)
         else:
@@ -227,7 +228,7 @@ class Table(Frame):
                                         parent=self.Parent)
                 else:
                     [self.__tree.delete(__child) for __child in self.__tree.get_children() \
-                                                 if __child not in common_ones]
+                                                                                           if __child not in common_ones]
             except (TypeError, IndexError) as err:
                 messagebox.showinfo("Error", err, parent=self.Parent)
 
@@ -236,8 +237,8 @@ class Table(Frame):
            Обновляет измененную строку
         """
         try:
-            __check = [__child for __child in self.__tree.get_children()\
-                               if trigger in self.__tree.item(__child)['values']]
+            __check = [__child for __child in self.__tree.get_children() \
+                                                                         if trigger in self.__tree.item(__child)['values']]
             if __check:
                 self.__tree.delete(__check)
                 [self.__tree.insert('', END, values=__row) for __row in entry]
@@ -258,9 +259,9 @@ class Table(Frame):
            Удаляет заявку по адрессу
         """
         try:
-            [self.__tree.delete(__child) for __child in self.__tree.get_children()\
-                                         if adr in self.__tree.item(__child)['values'] and\
-                                            regdate in self.__tree.item(__child)['values']]
+            [self.__tree.delete(__child) for __child in self.__tree.get_children() \
+                                                                                   if adr in self.__tree.item(__child)['values'] and\
+                                                                                      regdate in self.__tree.item(__child)['values']]
         except TypeError as err:
             messagebox.showinfo("Error", err, parent=self.Parent)
 
@@ -668,7 +669,7 @@ class Authentication(Tk):
         try:
             list_ = [i.get() for i in self.auth_list]
             __check = [__x for __x in list_[0:2] \
-                           if __x == '' or len(__x) > 30]
+                                                 if __x == '' or len(__x) > 30]
         except (UnboundLocalError, TypeError) as exc:
             messagebox.showinfo("Ошибка:", exc)
         else:
@@ -731,7 +732,7 @@ class Authentication(Tk):
 class Root(Tk):
     """Main window class, inherites Tk class"""
 
-    def __init__(self, data=tuple()):
+    def __init__(self, data=list()):
         super().__init__()
 
         self.protocol("WM_DELETE_WINDOW", self.__confirm_exit)
@@ -806,8 +807,6 @@ class Root(Tk):
                                                 width=18, textvariable=self.__variables[10])
 
         self.__monthchoosen['values'] = ('Телевидение', 'Интернет', 'Пакет')
-
-        self.__monthchoosen.current()
 
         self.entryes_tuple = (self.FIO_entry, self.address_entry,
                               self.telephone_entry, self.reason_entry,
@@ -985,7 +984,7 @@ class Root(Tk):
         self.show_menu()
 
     @staticmethod
-    def insert_in_entryes(entryes=tuple(), dell=int()):
+    def insert_in_entryes(entryes=list(), dell=int()):
         """Insenrting values in entryes
            if some values already there
            delete previous values and insert new
@@ -1002,7 +1001,7 @@ class Root(Tk):
             messagebox.showinfo("Ошибка", err)
 
     @staticmethod
-    def sorting_(received_data=tuple()):
+    def sorting_(received_data=list()):
         """Sorting incoming messages
            Сортирует входящие сообщения
         """
@@ -1014,7 +1013,7 @@ class Root(Tk):
         except (AttributeError, TypeError) as err:
             messagebox.showinfo("Ошибка", err)
         else:
-            yield tuple(__received_msg)
+            yield __received_msg
 
     def instruction(self):
         """This function purpose is to open file
@@ -1051,13 +1050,13 @@ class Root(Tk):
                 __now = datetime.now()
                 __d_string = __now.strftime("%d-%m-%Y")
                 list_ = [i.get() for i in self.__variables]
-                __variables = (*list_[1:5], *list_[6:11], self.user,
-                               __d_string, list_[0], list_[5])
+                __variables = [*list_[1:5], *list_[6:11], self.user,
+                               __d_string, list_[0], list_[5]]
                 __pattern = r'[A-Za-z]'
                 __check = [__z for __z in __variables \
-                               if __z == '' \
-                                            or len(__z) > 100 \
-                                            or re.findall(__pattern, __z)]
+                                                      if __z == '' \
+                                                                   or len(__z) > 100 \
+                                                                   or re.findall(__pattern, __z)]
             except Exception as exc:
                 messagebox.showinfo("Ошибка:", exc)
             else:
@@ -1169,11 +1168,11 @@ class Root(Tk):
         """
         try:
             list_ = [i.get() for i in self.__variables]
-            __variables = (*list_[1:5], *list_[6:12], list_[0], list_[5])
+            __variables = [*list_[1:5], *list_[6:12], list_[0], list_[5]]
             __pattern = r'[A-Za-z]'
-            __check = [__z for __z in __variables\
-                           if __z == '' or len(__z) > 100 \
-                                        or re.findall(__pattern, __z)]
+            __check = [__z for __z in __variables \
+                                                  if __z == '' or len(__z) > 100 \
+                                                                                 or re.findall(__pattern, __z)]
         except (TypeError, Exception, UnboundLocalError) as exc:
             messagebox.showinfo("Ошибка:", exc)
         else:
