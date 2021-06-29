@@ -211,10 +211,10 @@ class MyServer:
 
     async def delete(self, db, SQLlist):
         try:
-            await db.executemany("DELETE FROM records\
-                                  WHERE address = :address AND\
-                                        RegDate = :RegDate",
-                                {'address': SQLlist[1], 'RegDate': SQLlist[2]})
+            await db.execute("DELETE FROM records\
+                              WHERE address = :address AND\
+                                    RegDate = :RegDate",
+                            {'address': SQLlist[1], 'RegDate': SQLlist[2]})
             await db.commit()
         except (IndexError, OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
