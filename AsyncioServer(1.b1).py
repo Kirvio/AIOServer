@@ -256,7 +256,7 @@ class MyServer:
             msg = "Запись обновлена"
             return msg
 
-    async def access_db(self, SQLlist=tuple()):
+    async def access_db(self, SQLlist=list()):
         """This coroutine is used for DB connection
            required data is defines via keyword from client
            Эта корутина предназначена для соединения с БД
@@ -402,7 +402,7 @@ class MyServer:
                 # if connection established
                 if read_data_task:
                     done, pending = await asyncio.shield(\
-                                        asyncio.wait({read_data_task}))
+                                          asyncio.wait({read_data_task}))
                     if read_data_task in done:
                         try:
                             received_query = read_data_task.result()
@@ -410,7 +410,7 @@ class MyServer:
                             decrypt_data_task = asyncio.create_task(\
                                                                     AsyncioBlockingIO().decrypt_message(received_query))
                             done, pending = await asyncio.shield(\
-                                                asyncio.wait({decrypt_data_task}))
+                                                  asyncio.wait({decrypt_data_task}))
                         except (asyncio.InvalidStateError, asyncio.TimeoutError,\
                                 asyncio.CancelledError):
                             log.error("Exception occurred", exc_info=True)
@@ -427,7 +427,7 @@ class MyServer:
 
                                     db_task = asyncio.create_task(self.access_db(SQLlist=message))
                                     done, pending = await asyncio.shield(\
-                                                        asyncio.wait({db_task}))
+                                                          asyncio.wait({db_task}))
                                 except (asyncio.TimeoutError, asyncio.CancelledError,\
                                         asyncio.InvalidStateError):
                                     log.error("Exception occurred", exc_info=True)
@@ -439,9 +439,9 @@ class MyServer:
                                             data_from_db = db_task.result()
                                             # wait untill writer is ready
                                             write_task = asyncio.create_task(\
-                                                                            self.write_response(client_writer, data_from_db))
+                                                                             self.write_response(client_writer, data_from_db))
                                             done, pending = await asyncio.shield(\
-                                                                asyncio.wait({write_task}))
+                                                                  asyncio.wait({write_task}))
                                         except (asyncio.TimeoutError, asyncio.CancelledError,\
                                                 asyncio.InvalidStateError):
                                             log.error("Exception occurred", exc_info=True)
@@ -486,7 +486,7 @@ class MyServer:
                     raise
                 else:
                     try:
-                       client_writer.write(query)
+                        client_writer.write(query)
                     except (asyncio.SendfileNotAvailableError, IOError):
                         log.error("Exception occured", exc_info=True)
                         raise
