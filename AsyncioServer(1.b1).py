@@ -33,7 +33,7 @@ class MyServer:
             s = chain(*product(data, '#'))
             s = map(str, chain.from_iterable(s))
             s = '^'.join((*s,))
-        except Exception:
+        except AttributeError:
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -44,7 +44,7 @@ class MyServer:
             cursor = await db.execute("SELECT Password \
                                        FROM Cipher \
                                        WHERE Login = :Login",
-                                      {'Login': SQLlist[1]})
+                                     {'Login': SQLlist[1]})
             cursor = await cursor.fetchone()
             if cursor:
                 check_ = (await asyncio.wait_for(\
@@ -62,8 +62,8 @@ class MyServer:
                     cursor = "Fail"
             else:
                 cursor = "NOLOG"
-
-        except (IndexError, OperationalError, ProgrammingError):
+        except (AttributeError, IndexError,\
+                OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -80,7 +80,8 @@ class MyServer:
             await db.commit()
 
             log.info(f"Сотрудник {SQLlist[4]} зарегистрирован")
-        except (IndexError, OperationalError, ProgrammingError):
+        except (AttributeError, IndexError,\
+                OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -98,7 +99,8 @@ class MyServer:
                             {'ID': SQLlist[1], 'Login': SQLlist[2],
                              'Password': new_hash, 'employee_FIO': SQLlist[4]})
             await db.commit()
-        except (IndexError, OperationalError, ProgrammingError):
+        except (AttributeError, IndexError,\
+                OperationalError, ProgrammingError):
             log.error("Exception occured", exc_info=True)
             raise
         else:
@@ -112,7 +114,8 @@ class MyServer:
                               WHERE ID = :ID",
                               {'ID': SQLlist[1]})
             await db.commit()
-        except (IndexError, OperationalError, ProgrammingError):
+        except (AttributeError, IndexError,\
+                OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -122,16 +125,17 @@ class MyServer:
 
     async def allquery(self, db):
         try:
-            cursor = await db.execute("SELECT RecDate, FIO, address,\
-                                              telephone, reason, Tariff, information,\
-                                              for_master, master, record_value,\
-                                              Category, FIO_employee, RegDate \
+            cursor = await db.execute("SELECT rec_date, FIO, address,\
+                                              telephone, reason, current_tariff, realization_time,\
+                                              for_master, master, record_state,\
+                                              category, employee_FIO, reg_date, ID\
                                        FROM records")
             cursor = await cursor.fetchall()
 
             cursor = await self.iterate_(cursor)
 
-        except (DatabaseError, OperationalError, ProgrammingError):
+        except (AttributeError, DatabaseError,\
+                OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -146,7 +150,8 @@ class MyServer:
             cursor = await cursor.fetchall()
             cursor = await self.iterate_(cursor)
 
-        except (DatabaseError, OperationalError, ProgrammingError):
+        except (AttributeError, DatabaseError,\
+                OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -155,13 +160,13 @@ class MyServer:
 
     async def curquery(self, db, SQLlist):
         try:
-            cursor = await db.execute("SELECT RecDate, FIO, address, telephone,\
-                                              reason, Tariff, information,\
-                                              for_master, master, record_value, Category,\
-                                              FIO_employee, RegDate \
+            cursor = await db.execute("SELECT rec_date, FIO, address, telephone,\
+                                              reason, current_tariff, realization_time,\
+                                              for_master, master, record_state, category,\
+                                              employee_FIO, reg_date, ID\
                                        FROM records \
-                                       WHERE RecDate = :RecDate",
-                                       {'RecDate': SQLlist[1]})
+                                       WHERE rec_date = :rec_date",
+                                       {'rec_date': SQLlist[1]})
             cursor = await cursor.fetchall()
 
             if cursor == []:
@@ -171,7 +176,8 @@ class MyServer:
                 log.info("Запрос на текущие заявки")
                 cursor = await self.iterate_(cursor)
 
-        except (IndexError, OperationalError, ProgrammingError):
+        except (AttributeError, IndexError,\
+                OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -179,29 +185,30 @@ class MyServer:
 
     async def insert(self, db, SQLlist):
         try:
-            await db.execute("INSERT INTO records (FIO, address, telephone, reason,\
-                                                   information, for_master, master, record_value, Category,\
-                                                   FIO_employee, RegDate, RecDate, Tariff)\
-                              VALUES (:FIO, :address, :telephone, :reason, :information,\
-                                      :for_master, :master, :record_value, :Category, :FIO_employee,\
-                                      :RegDate, :RecDate, :Tariff)",\
+            await db.execute("INSERT INTO records (category, FIO, address, telephone,\
+                                                   reason, current_tariff, realization_time, for_master, master,\
+                                                   rec_date, record_state, reg_date, employee_FIO)\
+                              VALUES (:category, :FIO, :address, :telephone, :reason,\
+                                      :current_tariff, :realization_time, :for_master, :master, :rec_date,\
+                                      :record_state, :reg_date, :employee_FIO)",\
                             {
-                              'FIO': SQLlist[1],
-                              'address': SQLlist[2],
-                              'telephone': SQLlist[3],
-                              'reason': SQLlist[4],
-                              'information': SQLlist[5],
-                              'for_master': SQLlist[6],
-                              'master': SQLlist[7],
-                              'record_value': SQLlist[8],
-                              'Category': SQLlist[9],
-                              'FIO_employee': SQLlist[10],
-                              'RegDate': SQLlist[11],
-                              'RecDate': SQLlist[12],
-                              'Tariff': SQLlist[13]
+                              'category': SQLlist[1],
+                              'FIO': SQLlist[2],
+                              'address': SQLlist[3],
+                              'telephone': SQLlist[4],
+                              'reason': SQLlist[5],
+                              'current_tariff': SQLlist[6],
+                              'realization_time': SQLlist[7],
+                              'for_master': SQLlist[8],
+                              'master': SQLlist[9],
+                              'rec_date': SQLlist[10],
+                              'record_state': SQLlist[11],
+                              'reg_date': SQLlist[12],
+                              'employee_FIO': SQLlist[13]
                             })
             await db.commit()
-        except (IndexError, OperationalError, ProgrammingError):
+        except (AttributeError, IndexError,\
+                OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -210,19 +217,13 @@ class MyServer:
             return msg
 
     async def delete(self, db, SQLlist):
-        print(SQLlist)
         try:
             await db.execute("DELETE FROM records\
-                              WHERE RegDate = :RegDate AND \
-                                    address = :address AND \
-                                    RecDate = :RecDate AND \
-                                    FIO = :FIO",
-                            {'RegDate': SQLlist[1],\
-                             'RecDate': SQLlist[2],\
-                             'address': SQLlist[3],\
-                             'FIO': SQLlist[4]})
+                              WHERE ID = :ID",
+                            {'ID': SQLlist[1]})
             await db.commit()
-        except (IndexError, OperationalError, ProgrammingError):
+        except (AttributeError, IndexError,\
+                OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:
@@ -233,31 +234,28 @@ class MyServer:
     async def update(self, db, SQLlist):
         try:
             await db.execute("UPDATE records\
-                              SET FIO = :FIO, address = :address, telephone = :telephone,\
-                                  reason = :reason, information = :information,\
-                                  for_master = :for_master, master = :master,\
-                                  record_value = :record_value, Category = :Category,\
-                                  RecDate = :RecDate, Tariff = :Tariff\
-                              WHERE RegDate = :RegDate AND \
-                                    address = :address AND \
-                                    RecDate = :RecDate AND \
-                                    FIO = :FIO",
+                              SET category = :category, FIO = :FIO, address = :address,\
+                                  telephone = :telephone, reason = :reason, realization_time = :realization_time,\
+                                  for_master = :for_master, master = :master, record_state = :record_state,\
+                                  rec_date = :rec_date, current_tariff = :current_tariff\
+                              WHERE ID = :ID",
                             {
-                              'FIO': SQLlist[1],
-                              'address': SQLlist[2],
-                              'telephone': SQLlist[3],
-                              'reason': SQLlist[4],
-                              'information': SQLlist[5],
-                              'for_master': SQLlist[6],
-                              'master': SQLlist[7],
-                              'record_value': SQLlist[8],
-                              'Category': SQLlist[9],
-                              'RegDate': SQLlist[10],
-                              'RecDate': SQLlist[11],
-                              'Tariff': SQLlist[12]
+                              'ID': SQLlist[1],
+                              'category': SQLlist[2],
+                              'FIO': SQLlist[3],
+                              'address': SQLlist[4],
+                              'telephone': SQLlist[5],
+                              'reason': SQLlist[6],
+                              'realization_time': SQLlist[7],
+                              'for_master': SQLlist[8],
+                              'master': SQLlist[9],
+                              'record_state': SQLlist[10],
+                              'rec_date': SQLlist[11],
+                              'current_tariff': SQLlist[12]
                             })
             await db.commit()
-        except (IndexError, OperationalError, ProgrammingError):
+        except (AttributeError, IndexError,\
+                OperationalError, ProgrammingError):
             log.error("Exception occurred", exc_info=True)
             raise
         else:

@@ -131,10 +131,11 @@ class Table(Frame):
 
                         Root.insert_in_entryes(entryes=__data_list)
 
-                        __weak_ref_var.r_var.set(__data[9]),\
-                        __weak_ref_var.Category.set(__data[10]),\
-                        __weak_ref_var.Date.set(__data[0]),\
-                        __weak_ref_var.RegDate.set(__data[12])
+                        __weak_ref_var.record_state.set(__data[9]),\
+                        __weak_ref_var.category.set(__data[10]),\
+                        __weak_ref_var.rec_date.set(__data[0]),\
+                        __weak_ref_var.reg_date.set(__data[12]),\
+                        __weak_ref_var.ID.set(__data[13])
                     except (Exception, IndexError,\
                             UnboundLocalError, TypeError) as exc:
                         messagebox.showinfo("Ошибка:", exc, parent=self.Parent)
@@ -234,14 +235,18 @@ class Table(Frame):
                 messagebox.showinfo("Error", err, parent=self.Parent)
 
     def change_record(self, trigger, entry=list()):
+        print(trigger)
         """Renew changed line
            Обновляет измененную строку
         """
         try:
-            self.remove_record(trigger)
-            [self.__tree.insert('', END, values=__row) for __row in entry]
+            x = self.remove_record(trigger)
+            if x:
+                [self.__tree.insert('', END, values=__row) for __row in entry]
+            else:
+                pass
         except (TypeError, IndexError) as err:
-            messagebox.showinfo("Error", err, parent=self.Parent)
+            messagebox.showinfo("Ошибка", err, parent=self.Parent)
 
     def add_record(self, entry=tuple()):
         """Adds record to the table
@@ -258,12 +263,11 @@ class Table(Frame):
         """
         try:
             [self.__tree.delete(__child) for __child in self.__tree.get_children() \
-                                                                                   if trigger[0] in self.__tree.item(__child)['values'] and \
-                                                                                      trigger[1] in self.__tree.item(__child)['values'] and \
-                                                                                      trigger[2] in self.__tree.item(__child)['values'] and \
-                                                                                      trigger[3] in self.__tree.item(__child)['values']]
+                                                                                   if int(trigger) in self.__tree.item(__child)['values']]
         except (TypeError, IndexError) as err:
             messagebox.showinfo("Error", err, parent=self.Parent)
+        else:
+            return True
 
 class Registration(Toplevel):
     """Administration window for users"""
@@ -507,7 +511,7 @@ class Search(Toplevel):
         self.__table = Table(self, headings=('Дата выполнения заявки', 'ФИО', 'Адрес',
                                              'Телефон', 'Причина', 'Текущий ТП', 'Время выполнения',
                                              'Для Мастера', 'Мастер', 'Состояние заявки', 'Категория',
-                                             'ФИО сотрудника', 'Дата регистрации'), rows=data, counter=2)
+                                             'ФИО сотрудника', 'Дата регистрации', 'ID'), rows=data, counter=2)
 
         entryes_tuple = (self.__category_box, self.__employee_search_box,
                          self.__month_box, self.__year_box)
@@ -737,13 +741,15 @@ class Root(Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.__confirm_exit)
 
-        self.__variables = [self.Date, self.FIO, self.address, self.telephone,
-                            self.reason, self.tariff, self.information, self.for_master,
-                            Root.master, Root.r_var, self.Category, self.RegDate] = \
-                                                                                    StringVar(), StringVar(), StringVar(), StringVar(),\
-                                                                                    StringVar(), StringVar(), StringVar(), StringVar(),\
-                                                                                    StringVar(), StringVar(), StringVar(), StringVar()
-        Root.r_var.set('Открыта')
+        self.__variables = [self.category, self.FIO, self.address, self.telephone, self.reason,\
+                            self.current_tariff, self.realization_time, self.for_master, Root.master, self.rec_date,\
+                            Root.record_state, self.reg_date] = \
+                                                                StringVar(), StringVar(), StringVar(), StringVar(),\
+                                                                StringVar(), StringVar(), StringVar(), StringVar(),\
+                                                                StringVar(), StringVar(), StringVar(), StringVar()
+        self.ID = StringVar()
+
+        Root.record_state.set('Открыта')
         self.user = Authentication.FIO_employee
         self.title(self.user)
 
@@ -755,7 +761,7 @@ class Root(Tk):
         Root.table = Table(self, headings=('Дата выполнения заявки', 'ФИО', 'Адрес',
                                            'Телефон', 'Причина', 'Текущий ТП', 'Время выполнения',
                                            'Для Мастера', 'Мастер', 'Состояние заявки', 'Категория',
-                                           'ФИО сотрудника', 'Дата регистрации'), rows=data)
+                                           'ФИО сотрудника', 'Дата регистрации', 'ID'), rows=data)
 
         style = ttk.Style()
 
@@ -798,13 +804,13 @@ class Root(Tk):
 
         self.__cal = DateEntry(self,
                                     font=("Times New Roman", 12), style='my.DateEntry',
-                                    textvariable=self.__variables[0], width=18,
+                                    textvariable=self.__variables[9], width=18,
                                     borderwidth=2, year=int(__y_string),
                                     date_pattern='dd.MM.yyyy')
 
         self.__monthchoosen = ttk.Combobox(self,
                                                 font=("Times New Roman", 12), style='my.TCombobox',
-                                                width=18, textvariable=self.__variables[10])
+                                                width=18, textvariable=self.__variables[0])
 
         self.__monthchoosen['values'] = ('Телевидение', 'Интернет', 'Пакет')
 
@@ -874,21 +880,19 @@ class Root(Tk):
                                       activebackground='gray10', bg="gray10",
                                       font=("Times New Roman", 12), fg='White',
                                       text='Открыта', selectcolor='gray10',
-                                      variable=self.r_var, value='Открыта')
+                                      variable=self.record_state, value='Открыта')
 
         self.__r2 = Radiobutton(self, activeforeground='White',
                                       activebackground='gray10', bg="gray10",
                                       font=("Times New Roman", 12), fg='White',
                                       text='Закрыта', selectcolor='gray10',
-                                      variable=self.r_var, value='Закрыта')
+                                      variable=self.record_state, value='Закрыта')
 
         self.__delete_button = Button(self, font=("Times New Roman", 12),
                                             background='White', activebackground='sky blue',
                                             fg="gray1", text="Удалить запись",
-                                            width=15, command=lambda: self.delete_record(trigger=[self.RegDate.get(),\
-                                                                                                  self.Date.get(),\
-                                                                                                  self.address.get(),\
-                                                                                                  self.FIO.get()]))
+                                            width=15, command=lambda: \
+                                                                      self.delete_record(trigger=self.ID.get()))
 
         self.__add_button = Button(self, font=("Times New Roman", 12),
                                          background='White', activebackground='sky blue',
@@ -940,7 +944,7 @@ class Root(Tk):
                              command=lambda: self.table.Export(heading=('Дата выполнения заявки', 'ФИО', 'Адрес', 'Телефон',
                                                                         'Причина', 'Текущий ТП', 'Время выполнения',
                                                                         'Для Мастера', 'Мастер', 'Состояние заявки',
-                                                                        'Категория', 'ФИО сотрудника', 'Дата регистрации')))
+                                                                        'Категория', 'ФИО сотрудника', 'Дата регистрации', 'ID')))
 
         __m_search = Menu(__m, font=("Times New Roman", 11),
                                activebackground='sky blue',
@@ -1053,8 +1057,7 @@ class Root(Tk):
                 __now = datetime.now()
                 __d_string = __now.strftime("%d-%m-%Y")
                 list_ = [i.get() for i in self.__variables]
-                __variables = [*list_[1:5], *list_[6:11], self.user,
-                               __d_string, list_[0], list_[5]]
+                __variables = [*list_[0:11], __d_string, self.user]
                 __pattern = r'[A-Za-z]'
                 __check = [__z for __z in __variables \
                                                       if __z == '' \
@@ -1067,7 +1070,7 @@ class Root(Tk):
                     if __check:
                         messagebox.showinfo("Ошибка", "Ошибка в тексте!")
                     else:
-                        if self.r_var.get() == 'Закрыта':
+                        if self.record_state.get() == 'Закрыта':
                             messagebox.showinfo("Внимание", "Заявка в закрытом состоянии")
                         else:
                             __request = "^".join(("INSERT", *__variables))
@@ -1075,8 +1078,8 @@ class Root(Tk):
                             __received_data = Internet().IntoNetwork(data=__request)
                             self.isfull_label.configure(text="")
                             messagebox.showinfo("Data:", __received_data)
-                            __list_for_table = [[__variables[11], *__variables[0:4],
-                                                 __variables[12], *__variables[4:11]]]
+                            __list_for_table = [[__variables[9], *__variables[1:9], __variables[10],
+                                                 __variables[0], __variables[12], __variables[11]]]
                             self.table.add_record(entry=__list_for_table)
                 except (IndexError, Exception, TypeError) as exc:
                     messagebox.showinfo("Ошибка:", exc)
@@ -1093,13 +1096,13 @@ class Root(Tk):
         try:
             __pattern = r'[A-Za-z]'
             if ID == 1:
-                __CAT = self.Category.get()
+                __CAT = self.category.get()
                 if __CAT == '' or re.findall(__pattern, __CAT):
                     messagebox.showinfo("Ошибка", "Заполните поле категории корректно!")
                 else:
                     self.table.search_query(trigger=__CAT)
             elif ID == 2:
-                __DATE = self.Date.get()
+                __DATE = self.rec_date.get()
                 if __DATE == '' or re.findall(__pattern, __DATE):
                     messagebox.showinfo("Ошибка", "Выберите дату корректно!")
                 else:
@@ -1114,7 +1117,7 @@ class Root(Tk):
             messagebox.showinfo("Ошибка:", exc)
 
     def connect(self, trigger):
-        __request = "^".join(("DELETE", *trigger))
+        __request = "^".join(("DELETE", trigger))
         __received_data = Internet().IntoNetwork(data=__request)
         messagebox.showinfo("Data:", __received_data)
         self.table.remove_record(trigger)
@@ -1135,7 +1138,7 @@ class Root(Tk):
         result = messagebox.askyesno(message=message, parent=self)
         if result:
             try:
-                if self.r_var.get() == "Открыта":
+                if self.record_state.get() == "Открыта":
                     message = "Заявка в открытом состоянии,\
                                \nвы уверены что хотите удалить заявку?"
                     result = messagebox.askyesno(message=message, parent=self)
@@ -1163,7 +1166,9 @@ class Root(Tk):
         """
         try:
             list_ = [i.get() for i in self.__variables]
-            __variables = [*list_[1:5], *list_[6:12], list_[0], list_[5]]
+            __variables = [self.ID.get(), *list_[0:5], *list_[6:9],
+                                     list_[10], list_[9], list_[5]]
+            print(__variables)
             __pattern = r'[A-Za-z]'
             __check = [__z for __z in __variables \
                                                   if __z == '' or len(__z) > 100 \
@@ -1177,14 +1182,13 @@ class Root(Tk):
                 else:
                     message = "Вы уверены, что хотите изменить заявку?"
                     result = messagebox.askyesno(message=message, parent=self)
-                    __gr_var = [[__variables[10], *__variables[0:4], __variables[11],
-                                 *__variables[4:9], 'User', __variables[9]]]
+                    __gr_var = [[__variables[10], *__variables[2:6], __variables[11],\
+                                 *__variables[6:10], __variables[1], 'User', '-']]
                     if result:
                         __request = "^".join(("UPDATE", *__variables))
                         __received_data = Internet().IntoNetwork(data=__request)
                         messagebox.showinfo("Data:", __received_data)
-                        self.table.change_record(trigger=[__variables[9], __variables[0],\
-                                                          __variables[10], __variables[1]], entry=__gr_var)
+                        self.table.change_record(trigger=self.ID.get(), entry=__gr_var)
                     else:
                         pass
             except (Exception, IndexError) as exc:
