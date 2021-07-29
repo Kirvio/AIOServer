@@ -18,6 +18,7 @@ class MyServer:
        with some db functionality,
        using Python 3.9.1
        writen in EAFP and code style
+
        Мой пример Асинхронного TCP сервера
        с запросами в БД, используется python 3.9.1
        в EAFP стиле
@@ -268,6 +269,7 @@ class MyServer:
     async def access_db(self, SQLlist=list()):
         """This coroutine is used for DB connection
            required data is defines via keyword from client
+
            Эта корутина предназначена для соединения с БД
            запрашиваемые данные определяются с помощью
            ключевого слова, которое посылает клиент
@@ -356,6 +358,7 @@ class MyServer:
 
     async def accept_client(self, client_reader, client_writer):
         """This coroutine is used to accept client connection
+
            Эта корутина используется для обработки соединений
            от TCP клиента
         """
@@ -396,6 +399,7 @@ class MyServer:
 
     async def handle_client(self, client_reader, client_writer):
         """handles incoming TCP connection from client
+
            обрабатывает запрос клиента
         """
 
@@ -472,6 +476,7 @@ class MyServer:
     async def write_response(self, client_writer, data):
         """This function encrypting data from DB query
            and sends it to our client
+
            Эта функция зашифровывает данные из БД
            и отправляет их клиенту
         """
@@ -508,6 +513,7 @@ class MyServer:
            coroutine accept_client, that responsible for
            creating 'client connections' tasks in our server
            that handles incoming connections
+
            Эта корутина запускает наш асинхронный сервер
            в петле событий, reader и writer передаются
            корутине accept_client, которая ответственна
