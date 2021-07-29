@@ -4,12 +4,14 @@ from socket import AF_INET
 import logging
 from weakref import WeakKeyDictionary
 from itertools import chain, product
+import time
 try:
     from aiosqlite import connect, DatabaseError, ProgrammingError,\
                           OperationalError, NotSupportedError
     from AIOEncryption import AsyncioBlockingIO
-except ImportError:
-    raise
+except ImportError as exc:
+    print(exc)
+    time.sleep(20)
 
 class MyServer:
     """My example of asyncio TCP server,
@@ -37,7 +39,7 @@ class MyServer:
             log.error("Exception occurred", exc_info=True)
             raise
         else:
-            return s 
+            return s
 
     async def enter(self, db, SQLlist):
         try:
@@ -53,7 +55,7 @@ class MyServer:
                     cursor = await db.execute("SELECT employee_FIO \
                                                FROM Cipher \
                                                WHERE Login = :Login",
-                                               {'Login': SQLlist[1]})
+                                              {'Login': SQLlist[1]})
                     cursor = await cursor.fetchone()
                     log.info(f"Сотрудник {SQLlist[1]} авторизировался")
                     cursor = "^".join(["GO", cursor[0]])
@@ -112,7 +114,7 @@ class MyServer:
         try:
             await db.execute("DELETE FROM Cipher\
                               WHERE ID = :ID",
-                              {'ID': SQLlist[1]})
+                            {'ID': SQLlist[1]})
             await db.commit()
         except (AttributeError, IndexError,\
                 OperationalError, ProgrammingError):
@@ -166,7 +168,7 @@ class MyServer:
                                               employee_FIO, reg_date, ID\
                                        FROM records \
                                        WHERE rec_date = :rec_date",
-                                       {'rec_date': SQLlist[1]})
+                                     {'rec_date': SQLlist[1]})
             cursor = await cursor.fetchall()
 
             if cursor == []:
@@ -524,18 +526,23 @@ class MyServer:
             await self.server.serve_forever()
 
 if __name__ == "__main__":
-    Server = MyServer()
-    log = logging.getLogger('asyncio')
-    f_format = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    log.setLevel(logging.INFO)
-    f_handler = logging.FileHandler('ServerLog.log')
-    f_handler.setFormatter(f_format)
-    log.addHandler(f_handler)
     try:
-        # Starting our server and loop with debug mode
-        asyncio.run(Server.start(), debug=True)
-        loop = asyncio.get_running_loop()
-        if loop.get_debug():
-            log.debug("Some exception")
-    except KeyboardInterrupt:
-        pass
+        Server = MyServer()
+        log = logging.getLogger('asyncio')
+        f_format = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        log.setLevel(logging.INFO)
+        f_handler = logging.FileHandler('ServerLog.log')
+        f_handler.setFormatter(f_format)
+        log.addHandler(f_handler)
+    except Exception as exc:
+        print(exc)
+        time.sleep(20)
+    else:
+        try:
+            # Starting our server and loop with debug mode
+            asyncio.run(Server.start(), debug=True)
+            loop = asyncio.get_running_loop()
+            if loop.get_debug():
+                log.debug("Some exception")
+        except KeyboardInterrupt:
+            pass

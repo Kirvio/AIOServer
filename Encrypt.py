@@ -16,7 +16,7 @@ class Internet:
     __key_path = 'C:/PythonProgs/AIOServer/secret.key'
 
     # Function, to create connection with server
-    def IntoNetwork(self, data, host='172.20.20.14', port=43333):
+    def IntoNetwork(self, data, host='172.20.20.3', port=43333):
         try:
             # socket.create_connection returns link to socket object
             with create_connection((host, port)) as _sock:

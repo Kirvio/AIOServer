@@ -140,7 +140,7 @@ class Table(Frame):
                             UnboundLocalError, TypeError) as exc:
                         messagebox.showinfo("Ошибка:", exc, parent=self.Parent)
             else:
-                messagebox.showinfo("Внимание", "Выберите строку в таблице",
+                messagebox.showinfo("Внимание", "Выберите строку в таблице",\
                                                                             parent=self.Parent)
 
     def __do_popup(self, event):
@@ -157,22 +157,22 @@ class Table(Frame):
                                                                       parent=self.Parent)
         if file:
             try:
-                workbook = Workbook(file.name)
-                worksheet = workbook.add_worksheet()
-                [worksheet.write(0, col_n, data) for col_n, data in enumerate(heading)]
-                __data = [self.__tree.item(__child)['values'] \
-                                                              for __child in self.__tree.get_children()]
-
-                [[worksheet.write(row_num+1, col_num, col_data), \
-                  worksheet.set_column(col_num, 5, 40)] \
-                                                        for row_num, row_data in enumerate(__data)\
-                                                        for col_num, col_data in enumerate(row_data)]
+                with Workbook(file.name) as workbook:
+                    worksheet = workbook.add_worksheet()
+                    [worksheet.write(0, col_n, data) for col_n, data in enumerate(heading)]
+                    __data = [self.__tree.item(__child)['values'] \
+                                                                  for __child in self.__tree.get_children()]
+                    [[worksheet.write(row_num+1, col_num, col_data), \
+                      worksheet.set_column(col_num, 5, 40)] \
+                                                            for row_num, row_data in enumerate(__data)\
+                                                            for col_num, col_data in enumerate(row_data)]
             except Exception as err:
                 messagebox.showinfo("Ошибка", err, parent=self.Parent)
             else:
-                workbook.close()
                 messagebox.showinfo("Внимание", "Экспортировано успешно",
                                                                          parent=self.Parent)
+        else:
+            pass
 
     def update_table(self, rs=tuple()):
         """Delete data from table and
@@ -202,10 +202,12 @@ class Table(Frame):
         """
         if self.counter == 0:
             try:
-                __selections = [__child for __child in self.__tree.get_children() \
+                __selections = [__child \
+                                        for __child in self.__tree.get_children() \
                                                                                   if trigger in self.__tree.item(__child)['values']]
                 if __selections:
-                    [self.__tree.delete(__child) for __child in self.__tree.get_children() \
+                    [self.__tree.delete(__child) \
+                                                 for __child in self.__tree.get_children() \
                                                                                            if __child not in __selections]
                     Root.isfull_label.configure(text="Сортированные заявки")
                     #self.__tree.selection_set(__selections)
@@ -262,7 +264,8 @@ class Table(Frame):
            Удаляет заявку по адрессу
         """
         try:
-            [self.__tree.delete(__child) for __child in self.__tree.get_children() \
+            [self.__tree.delete(__child) \
+                                         for __child in self.__tree.get_children() \
                                                                                    if int(trigger) in self.__tree.item(__child)['values']]
         except (TypeError, IndexError) as err:
             messagebox.showinfo("Error", err, parent=self.Parent)
@@ -741,12 +744,13 @@ class Root(Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.__confirm_exit)
 
-        self.__variables = [self.category, self.FIO, self.address, self.telephone, self.reason,\
-                            self.current_tariff, self.realization_time, self.for_master, Root.master, self.rec_date,\
-                            Root.record_state, self.reg_date] = \
-                                                                StringVar(), StringVar(), StringVar(), StringVar(),\
-                                                                StringVar(), StringVar(), StringVar(), StringVar(),\
-                                                                StringVar(), StringVar(), StringVar(), StringVar()
+        self.__variables = \
+                            [self.category, self.FIO, self.address, self.telephone, self.reason,\
+                            self.current_tariff, self.realization_time, self.for_master, Root.master,\
+                            self.rec_date, Root.record_state, self.reg_date] = \
+                                                                               StringVar(), StringVar(), StringVar(), StringVar(),\
+                                                                               StringVar(), StringVar(), StringVar(), StringVar(),\
+                                                                               StringVar(), StringVar(), StringVar(), StringVar()
         self.ID = StringVar()
 
         Root.record_state.set('Открыта')
@@ -941,7 +945,8 @@ class Root(Tk):
         __m_edit.add_command(label="Показать меню", command=self.show_menu)
         __m_edit.add_separator()
         __m_edit.add_command(label="Экспорт в Excel",
-                             command=lambda: self.table.Export(heading=('Дата выполнения заявки', 'ФИО', 'Адрес', 'Телефон',
+                             command=lambda: self.table.Export(\
+                                                               heading=('Дата выполнения заявки', 'ФИО', 'Адрес', 'Телефон',
                                                                         'Причина', 'Текущий ТП', 'Время выполнения',
                                                                         'Для Мастера', 'Мастер', 'Состояние заявки',
                                                                         'Категория', 'ФИО сотрудника', 'Дата регистрации', 'ID')))
@@ -1167,8 +1172,7 @@ class Root(Tk):
         try:
             list_ = [i.get() for i in self.__variables]
             __variables = [self.ID.get(), *list_[0:5], *list_[6:9],
-                                     list_[10], list_[9], list_[5]]
-            print(__variables)
+                                           list_[10], list_[9], list_[5]]
             __pattern = r'[A-Za-z]'
             __check = [__z for __z in __variables \
                                                   if __z == '' or len(__z) > 100 \
