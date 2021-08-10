@@ -12,6 +12,7 @@ class AsyncioBlockingIO:
        To prevent blocking in event loop,
        use asyncify decorator,
        that runs CPU bound functions in executor
+
        В этом классе содержатся операции блокирующие
        I/O(CPU bound), что-бы не допустить блока
        используется декоратор asyncify

@@ -26,8 +26,6 @@ class MyServer:
 
     def __init__(self):
 
-        # Enables logs inside class
-
         # this keep tracking all client tasks inside
         self.clients = WeakKeyDictionary()
 

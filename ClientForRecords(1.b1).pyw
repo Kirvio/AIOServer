@@ -40,13 +40,14 @@ class Table(Frame):
         self.__tree["columns"] = headings
         self.__tree["displaycolumns"] = headings
 
-        [(self.__tree.heading(__head, text=__head,
-                                      anchor=CENTER, command=lambda __lhead=__head :\
-                                      self.__treeview_sort_column(self.__tree, __lhead, False)),
-          self.__tree.column(__head, anchor=CENTER, width=240))\
-                                                               for __head in headings]
+        for __head in headings:
+            self.__tree.heading(__head, text=__head,
+                                        anchor=CENTER, command=lambda __lhead=__head :\
+                                        self.__treeview_sort_column(self.__tree, __lhead, False)),
+            self.__tree.column(__head, anchor=CENTER, width=240)
 
-        [self.__tree.insert('', END, values=__row) for __row in rows]
+        for __row in rows:
+            self.__tree.insert('', END, values=__row)
 
         __scrolltabley = Scrollbar(self, command=self.__tree.yview)
         __scrolltablex = Scrollbar(self, orient="horizontal",
@@ -90,7 +91,8 @@ class Table(Frame):
             l = [(tv.set(k, col), k) for k in tv.get_children('')]
             l.sort(reverse=reverse)
 
-            [tv.move(k, '', index) for index, (val, k) in enumerate(l)]
+            for index, (val, k) in enumerate(l):
+                tv.move(k, '', index)
 
             tv.heading(col,
                            command=lambda: self.__treeview_sort_column(tv, col, not reverse))
@@ -159,13 +161,14 @@ class Table(Frame):
             try:
                 with Workbook(file.name) as workbook:
                     worksheet = workbook.add_worksheet()
-                    [worksheet.write(0, col_n, data) for col_n, data in enumerate(heading)]
+                    for col_n, data in enumerate(heading):
+                        worksheet.write(0, col_n, data)
                     __data = [self.__tree.item(__child)['values'] \
                                                                   for __child in self.__tree.get_children()]
-                    [[worksheet.write(row_num+1, col_num, col_data), \
-                      worksheet.set_column(col_num, 5, 40)] \
-                                                            for row_num, row_data in enumerate(__data)\
-                                                            for col_num, col_data in enumerate(row_data)]
+                    for row_num, row_data in enumerate(__data):
+                        for col_num, col_data in enumerate(row_data):
+                            worksheet.set_column(col_num, 5, 40)
+                            worksheet.write(row_num+1, col_num, col_data)
             except Exception as err:
                 messagebox.showinfo("Ошибка", err, parent=self.Parent)
             else:
@@ -181,8 +184,10 @@ class Table(Frame):
            вставить новые данные
         """
         try:
-            [self.__tree.delete(__i) for __i in self.__tree.get_children()]
-            [self.__tree.insert('', END, values=__row) for __row in rs]
+            for __i in self.__tree.get_children():
+                self.__tree.delete(__i)
+            for __row in rs:
+                self.__tree.insert('', END, values=__row)
         except TypeError as err:
             messagebox.showinfo("Error", err, parent=self.Parent)
     
@@ -192,7 +197,7 @@ class Table(Frame):
                        for __item in self.__tree.item(__child)['values'] \
                                                                          if type(__item) == str \
                                                                          if val in __item]
-        yield list(val)
+        yield val
 
     def search_query(self, trigger):
         """searching in the table for values
@@ -206,9 +211,9 @@ class Table(Frame):
                                         for __child in self.__tree.get_children() \
                                                                                   if trigger in self.__tree.item(__child)['values']]
                 if __selections:
-                    [self.__tree.delete(__child) \
-                                                 for __child in self.__tree.get_children() \
-                                                                                           if __child not in __selections]
+                    for __child in self.__tree.get_children():
+                        if __child not in __selections:
+                            self.__tree.delete(__child)
                     Root.isfull_label.configure(text="Сортированные заявки")
                     #self.__tree.selection_set(__selections)
                 else:
@@ -231,8 +236,9 @@ class Table(Frame):
                                         "Таких данных в таблице нет, попробуйте обновить таблицу",
                                                                                                   parent=self.Parent)
                 else:
-                    [self.__tree.delete(__child) for __child in self.__tree.get_children() \
-                                                                                           if __child not in common_ones]
+                    for __child in self.__tree.get_children():
+                        if __child not in common_ones:
+                            self.__tree.delete(__child)
             except (TypeError, IndexError) as err:
                 messagebox.showinfo("Error", err, parent=self.Parent)
 
@@ -264,9 +270,9 @@ class Table(Frame):
            Удаляет заявку по адрессу
         """
         try:
-            [self.__tree.delete(__child) \
-                                         for __child in self.__tree.get_children() \
-                                                                                   if int(trigger) in self.__tree.item(__child)['values']]
+            for __child in self.__tree.get_children():
+                if int(trigger) in self.__tree.item(__child)['values']:
+                    self.__tree.delete(__child)
         except (TypeError, IndexError) as err:
             messagebox.showinfo("Error", err, parent=self.Parent)
         else:
@@ -278,9 +284,12 @@ class Registration(Toplevel):
     def __init__(self, Parent, data=tuple()):
         super().__init__(Parent)
 
-        self.__variables = [self.ID, self.Login,
-                            self.Password, self.FIO_empl] = \
-                                                            StringVar(), StringVar(), StringVar(), StringVar()
+        self.__variables = [
+            self.ID, self.Login,
+            self.Password, self.FIO_empl
+        ] = \
+            StringVar(), StringVar(), StringVar(), StringVar()
+
         self.title("Администрирование:")
 
         MyLeftPos = (self.winfo_screenwidth() - 1200) / 2
@@ -744,13 +753,15 @@ class Root(Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.__confirm_exit)
 
-        self.__variables = \
-                            [self.category, self.FIO, self.address, self.telephone, self.reason,\
-                            self.current_tariff, self.realization_time, self.for_master, Root.master,\
-                            self.rec_date, Root.record_state, self.reg_date] = \
-                                                                               StringVar(), StringVar(), StringVar(), StringVar(),\
-                                                                               StringVar(), StringVar(), StringVar(), StringVar(),\
-                                                                               StringVar(), StringVar(), StringVar(), StringVar()
+        self.__variables = [
+                self.category, self.FIO, self.address, self.telephone, self.reason,\
+                self.current_tariff, self.realization_time, self.for_master, Root.master,\
+                self.rec_date, Root.record_state, self.reg_date
+        ] = \
+            StringVar(), StringVar(), StringVar(), StringVar(),\
+            StringVar(), StringVar(), StringVar(), StringVar(),\
+            StringVar(), StringVar(), StringVar(), StringVar()
+
         self.ID = StringVar()
 
         Root.record_state.set('Открыта')
@@ -919,15 +930,17 @@ class Root(Tk):
                                            command=lambda: self.insert_in_entryes(\
                                                                                   entryes=self.entryes_tuple, dell=1))
 
-        self.root_tuple = (self.__category_label, self.__FIO_label,
-                           self.__address_label, self.__telephone_label,
-                           self.__reason_label, self.tariff_entry,
-                           self.__information_label, self.__for_master_label,
-                           self.__master_label, self.__record_value_label,
-                           self.__data_label, *self.entryes_tuple, self.__r1,
-                           self.__r2, self.__cal, self.__monthchoosen,
-                           self.__delete_button, self.__add_button, self.__srch_button,
-                           self.__update_button, self.__clear_button, self.__tariff_label)
+        self.root_tuple = (
+            self.__category_label, self.__FIO_label,
+            self.__address_label, self.__telephone_label,
+            self.__reason_label, self.tariff_entry,
+            self.__information_label, self.__for_master_label,
+            self.__master_label, self.__record_value_label,
+            self.__data_label, *self.entryes_tuple, self.__r1,
+            self.__r2, self.__cal, self.__monthchoosen,
+            self.__delete_button, self.__add_button, self.__srch_button,
+            self.__update_button, self.__clear_button, self.__tariff_label
+        )
 
         self.__menu_visibility = True
         self.bind("<Control-Key-o>",
@@ -1006,9 +1019,12 @@ class Root(Tk):
         """
         try:
             if dell == 1:
-                [__i.delete(0, END) for __i in entryes]
+                for __i in entryes:
+                    __i.delete(0, END)
             else:
-                [[__i.delete(0, END), __i.insert(0, __d)] for __i, __d in entryes]
+                for __i, __d in entryes:
+                    __i.delete(0, END)
+                    __i.insert(0, __d)
         except TypeError as err:
             messagebox.showinfo("Ошибка", err)
 
@@ -1186,8 +1202,10 @@ class Root(Tk):
                 else:
                     message = "Вы уверены, что хотите изменить заявку?"
                     result = messagebox.askyesno(message=message, parent=self)
-                    __gr_var = [[__variables[10], *__variables[2:6], __variables[11],\
-                                 *__variables[6:10], __variables[1], 'User', '-']]
+                    __gr_var = [
+                        [__variables[10], *__variables[2:6], __variables[11],\
+                         *__variables[6:10], __variables[1], 'User', '-']
+                    ]
                     if result:
                         __request = "^".join(("UPDATE", *__variables))
                         __received_data = Internet().IntoNetwork(data=__request)
@@ -1261,7 +1279,8 @@ class Root(Tk):
         try:
             time.sleep(0.2)
             self.update_idletasks()
-            [__i.place_forget() for __i in self.root_tuple]
+            for __i in self.root_tuple:
+                __i.place_forget()
             self.table.place(relwidth=0.98,
                              relheight=0.90, relx=0.01, rely=0.05)
             self.__curdate.place(relwidth=0.13,
