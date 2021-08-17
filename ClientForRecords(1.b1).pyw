@@ -505,11 +505,13 @@ class Search(Toplevel):
                                              font=("Times New Roman", 12), style='my.TCombobox',
                                              width=18, textvariable=self.__month_date)
 
-        __month_dict = {'Январь': '.01.', 'Февраль': '.02.',
-                        'Март': '.03.', 'Апрель': '.04.', 'Май': '.05.',
-                        'Июнь': '.06.', 'Июль': '.07.', 'Август': '.08.',
-                        'Сентябрь': '.09.', 'Октябрь': '.10.',
-                        'Ноябрь': '.11.', 'Декабрь': '.12.', '': ''}
+        __month_dict = {
+            'Январь': '.01.', 'Февраль': '.02.',
+            'Март': '.03.', 'Апрель': '.04.', 'Май': '.05.',
+            'Июнь': '.06.', 'Июль': '.07.', 'Август': '.08.',
+            'Сентябрь': '.09.', 'Октябрь': '.10.',
+            'Ноябрь': '.11.', 'Декабрь': '.12.', '': ''
+        }
 
         self.__month_box['values'] = list(__month_dict.keys())[0:12]
 
@@ -517,16 +519,23 @@ class Search(Toplevel):
                                             font=("Times New Roman", 12), style='my.TCombobox',
                                             width=18, textvariable=self.__year_date)
 
-        self.__year_box['values'] = ('2021', '2022', '2023', '2024', '2025',\
-                                     '2026', '2027', '2028', '2029', '2030')
+        self.__year_box['values'] = (
+            '2021', '2022', '2023', '2024', '2025',
+            '2026', '2027', '2028', '2029', '2030'
+        )
 
-        self.__table = Table(self, headings=('Дата выполнения заявки', 'ФИО', 'Адрес',
-                                             'Телефон', 'Причина', 'Текущий ТП', 'Время выполнения',
-                                             'Для Мастера', 'Мастер', 'Состояние заявки', 'Категория',
-                                             'ФИО сотрудника', 'Дата регистрации', 'ID'), rows=data, counter=2)
+        self.__table = Table(self, headings=(
+            'Дата выполнения заявки', 'ФИО', 'Адрес',
+            'Телефон', 'Причина', 'Текущий ТП', 'Время выполнения',
+            'Для Мастера', 'Мастер', 'Состояние заявки', 'Категория',
+            'ФИО сотрудника', 'Дата регистрации', 'ID'
+        ),
+        rows=data, counter=2)
 
-        entryes_tuple = (self.__category_box, self.__employee_search_box,
-                         self.__month_box, self.__year_box)
+        entryes_tuple = (
+            self.__category_box, self.__employee_search_box,
+            self.__month_box, self.__year_box
+        )
 
         self.__search_button = Button(self, font=("Times New Roman", 12),
                                             background='White', activebackground='sky blue',
@@ -754,8 +763,8 @@ class Root(Tk):
         self.protocol("WM_DELETE_WINDOW", self.__confirm_exit)
 
         self.__variables = [
-                self.category, self.FIO, self.address, self.telephone, self.reason,\
-                self.current_tariff, self.realization_time, self.for_master, Root.master,\
+                self.category, self.FIO, self.address, self.telephone, self.reason,
+                self.current_tariff, self.realization_time, self.for_master, Root.master,
                 self.rec_date, Root.record_state, self.reg_date
         ] = \
             StringVar(), StringVar(), StringVar(), StringVar(),\
@@ -1099,8 +1108,10 @@ class Root(Tk):
                             __received_data = Internet().IntoNetwork(data=__request)
                             self.isfull_label.configure(text="")
                             messagebox.showinfo("Data:", __received_data)
-                            __list_for_table = [[__variables[9], *__variables[1:9], __variables[10],
-                                                 __variables[0], __variables[12], __variables[11]]]
+                            __list_for_table = [
+                                [__variables[9], *__variables[1:9], __variables[10],
+                                __variables[0], __variables[12], __variables[11]]
+                            ]
                             self.table.add_record(entry=__list_for_table)
                 except (IndexError, Exception, TypeError) as exc:
                     messagebox.showinfo("Ошибка:", exc)
@@ -1187,8 +1198,10 @@ class Root(Tk):
         """
         try:
             list_ = [i.get() for i in self.__variables]
-            __variables = [self.ID.get(), *list_[0:5], *list_[6:9],
-                                           list_[10], list_[9], list_[5]]
+            __variables = [
+                self.ID.get(), *list_[0:5], *list_[6:9],
+                list_[10], list_[9], list_[5]
+            ]
             __pattern = r'[A-Za-z]'
             __check = [__z for __z in __variables \
                                                   if __z == '' or len(__z) > 100 \
